@@ -48,11 +48,14 @@ class LabelConvert:
 def converter(wav, sr, nmels = 128, tweak = False, verbose = False):
     win_len = int(sr*0.025)
     hop = int(0.005*sr)
-    tweaker = choice(['mask_time', 'mask_frequency'])
+    tweaker = choice(['mask_time', 'mask_frequency', 'both'])
     layers = [torchaudio.transforms.MelSpectrogram(sample_rate=sr, n_mels=nmels, win_length=win_len, n_fft=win_len,
                                                    hop_length=hop)]
     if tweak:
         if tweaker == 'mask_time':
+            layers.append(torchaudio.transforms.TimeMasking(time_mask_param=15))
+        elif tweaker == 'both':
+            layers.append(torchaudio.transforms.FrequencyMasking(freq_mask_param=15))
             layers.append(torchaudio.transforms.TimeMasking(time_mask_param=15))
         else:
             layers.append(torchaudio.transforms.FrequencyMasking(freq_mask_param=15))
@@ -66,10 +69,12 @@ def converter(wav, sr, nmels = 128, tweak = False, verbose = False):
 
 
 def checkMel():
-    filename = "sample1.wav"
+    filename = "pilot/slow_sound_files/bask_ill_2.wav"
     waveform, sampling_rate = torchaudio.load(filename)
     original = converter(waveform, sr=sampling_rate)
     tweaked = converter(waveform, sr = sampling_rate, tweak=True, verbose=True)
+    print(f'dimension: {original.shape}')
     fig, ax = plt.subplots(2)
     ax[0].imshow(original, aspect='auto', origin = 'lower')
     ax[1].imshow(tweaked, aspect='auto', origin = 'lower')
+

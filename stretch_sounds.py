@@ -12,10 +12,12 @@ before running this script.
 
 Requires Python 2.7 or later. Python 3 is strongly recommended.
 
+This script is adapted from https://github.com/audacity/audacity/blob/master/scripts/piped-work/pipe_test.py
 """
 
 import os
 import sys
+from random import uniform, shuffle
 
 
 if sys.platform == 'win32':
@@ -75,7 +77,32 @@ def quick_test():
     """Example list of commands."""
     do_command('Help: Command=Help')
     do_command('Help: Command="GetInfo"')
-    #do_command('SetPreference: Name=GUI/Theme Value=classic Reload=1')
 
+
+def main(sounds_path, aug_ratio, speaker_name):
+    """Speed up sounds with random factors"""
+    # get list of sound file paths
+    cwd = os.getcwd()
+    sounds = [cwd + '/' + speaker_name + '/slow_sound_files/' + s for s in os.listdir(sounds_path) if 'wav' in s]
+    shuffle(sounds)
+    # create a folder for the new files
+    new_dir = cwd + '/' + speaker_name + '/sped_up'
+    os.mkdir(new_dir)
+    # define number of files to stretch
+    num_augs = int(len(sounds)*aug_ratio)
+    # define stretching percentage bounds
+    stretch_bounds = (30.0, 90.0)
+    for i in range(num_augs):
+        file_path = sounds[i]
+        sound_name = file_path.split('/')[-1]
+        new_file_path = new_dir + '/' + sound_name
+        stretch_factor = uniform(stretch_bounds[0], stretch_bounds[1])
+        do_command(f'import2: Filename="{file_path}"')
+        do_command('SelTrackStartToEnd:')
+        do_command(f'ChangeTempo: Percentage={stretch_factor} SBSMS=True')
+        do_command('SelTrackStartToEnd:')
+        do_command(f'export2: Filename="{new_file_path}"')
+        do_command('RemoveTracks:')
 if __name__ == '__main__':
     quick_test()
+    main('pilot/slow_sound_files', 0.5, 'pilot')
