@@ -82,7 +82,7 @@ def checkMel():
     ax[1].imshow(tweaked, aspect='auto', origin = 'lower')
 
 
-def loadData(file_path, val_ratio=0.15):
+def loadData(file_path, val_ratio=0.15, train_tweak_ratio=0.3):
     # get paths to sounds
     slow_path = file_path + '/' + 'slow_sound_files'
     sped_path = file_path + '/' + 'sped_up'
@@ -92,24 +92,35 @@ def loadData(file_path, val_ratio=0.15):
     shuffle(files)
     # train validation split
     num_val = len(files)*val_ratio
+    num_tweak = (len(files)-num_val)*train_tweak_ratio
     val = []
     train = []
-    count = 1
+    val_count = 1
+    tweak_count = 1
     for sound in files:
         # get target sequence words
         target_words = sound.split('/')[-1]
         target_words = target_words.split('_')[:2]
+        # get audio and sampling rate info
         wave, sampling_rate = torchaudio.load(sound)
-        data = (wave, sampling_rate, target_words)
-        if count <= num_val:
-            val.append(data)
+        # for the validation split
+        if val_count <= num_val:
+            val.append((wave, sampling_rate, target_words))
+            val_count += 1
+        # for the train split
         else:
-            train.append(data)
-        count += 1
+            # for the tweaked split, duplicate audio data and add augment indication tag
+            if tweak_count <= num_tweak:
+                train.append((wave, sampling_rate, target_words, 'tweak'))
+                train.append((wave, sampling_rate, target_words, 'no_tweak'))
+                tweak_count += 1
+            # for the non tweaked split
+            else:
+                train.append((wave, sampling_rate, target_words, 'no_tweak'))
     return train, val
 
 
-def dataProcess(data, batch_size, train=True, train_tweak_ratio = 0.3):
+def dataProcess(data, train=True):
     # initialise label converter
     labeller = LabelConvert()
     # initialise empty lists for data
@@ -117,29 +128,26 @@ def dataProcess(data, batch_size, train=True, train_tweak_ratio = 0.3):
     labels = []
     input_lens = []
     label_lens = []
-    if train:
-        # get number of sample to augment according to defined ratio
-        train_tweak_num = int(batch_size*train_tweak_ratio)
-        # count for augmentation
-        count = 1
-    for (wave, sampling_rate, words) in data:
-        # get original data
-        spec = converter(wave, sr=sampling_rate).transpose(0, 1)
+    for item in data:
+        # if process training set
+        if train:
+            wave, sampling_rate, words, aug = item
+            if aug == 'tweak':
+                spec = converter(wave, sr=sampling_rate, tweak=True).transpose(0, 1)
+            else:
+                spec = converter(wave, sr=sampling_rate).transpose(0, 1)
+        # if process validation set
+        else:
+            wave, sampling_rate, words = item
+            spec = converter(wave, sr=sampling_rate).transpose(0, 1)
+        # append data
         mel_specs.append(spec)
         target = Tensor(labeller.words_to_labels(words))
         labels.append(target)
         label_lens.append(len(target))
         input_lens.append(spec.shape[0])
-        if train and count <= train_tweak_num:
-            # augmented data
-            spec_tweaked = converter(wave, sr=sampling_rate, tweak=True).transpose(0, 1)
-            mel_specs.append(spec_tweaked)
-            labels.append(target)
-            label_lens.append(len(target))
-            input_lens.append(spec_tweaked.shape[0])
-            count += 1
     # pad sequences in the batch
-    mel_specs = nn.utils.rnn.pad_sequence(mel_specs, batch_first=True)
+    mel_specs = nn.utils.rnn.pad_sequence(mel_specs, batch_first=True).unsqueeze(1).transpose(2, 3)
     labels = nn.utils.rnn.pad_sequence(labels, batch_first=True)
     input_lens = Tensor(input_lens)
     label_lens = Tensor(label_lens)
@@ -149,9 +157,9 @@ def checkDataProcess():
     train_data, val_data = loadData('pilot')
     batch_size = 50
     train_loader = utils.data.DataLoader(dataset=train_data, batch_size=batch_size, shuffle=True,
-                                         collate_fn = lambda x: dataProcess(x, batch_size=batch_size))
-    val_loader = utils.data.DataLoader(dataset=val_data, batch_size=50, shuffle=True,
-                                       collate_fn = lambda x: dataProcess(x, batch_size=batch_size, train=False))
+                                         collate_fn = lambda x: dataProcess(x))
+    val_loader = utils.data.DataLoader(dataset=val_data, batch_size=batch_size, shuffle=True,
+                                       collate_fn = lambda x: dataProcess(x, train=False))
     for batch_num, data in enumerate(train_loader):
         spec, targets, input_lens, target_lens = data
         print(f'batch: {batch_num}\nspec shape: {spec.shape}\ntarget shape: {targets.shape}\n'
