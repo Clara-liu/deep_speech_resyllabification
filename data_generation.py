@@ -1,5 +1,6 @@
 from torch import nn, from_numpy, Tensor, utils, rand
 import torchaudio
+import torch
 from random import choice, shuffle
 from librosa import power_to_db
 from os import listdir
@@ -148,9 +149,9 @@ def dataProcess(data, train=True):
         input_lens.append(spec.shape[0])
     # pad sequences in the batch
     mel_specs = nn.utils.rnn.pad_sequence(mel_specs, batch_first=True).unsqueeze(1).transpose(2, 3)
-    labels = nn.utils.rnn.pad_sequence(labels, batch_first=True)
-    input_lens = Tensor(input_lens)
-    label_lens = Tensor(label_lens)
+    labels = nn.utils.rnn.pad_sequence(labels, batch_first=True).int()
+    input_lens = Tensor(input_lens).int()
+    label_lens = Tensor(label_lens).int()
     return mel_specs, labels, input_lens, label_lens
 
 def checkDataProcess():

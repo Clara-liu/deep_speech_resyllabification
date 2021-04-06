@@ -1,11 +1,6 @@
-'''
-models/modules designed inspired by Deep Speech 2: https://arxiv.org/pdf/1512.02595.pdf,
-ResNet: https://arxiv.org/pdf/1603.05027.pdf,
-as well as assembly AI: https://colab.research.google.com/drive/1IPpwx4rX32rqHKpLz7dc8sOKspUa-YKO
-'''
-
 from torch import nn
 from data_generation import loadData, dataProcess
+
 
 class Norm(nn.Module):
     def __init__(self, n_mels):
@@ -41,6 +36,7 @@ class ResNet(nn.Module):
         x += res
         return x
 
+
 class BiGRU(nn.Module):
     def __init__(self, gru_dim, hidden_size, dropout, batch_first):
         super(BiGRU, self).__init__()
@@ -55,6 +51,7 @@ class BiGRU(nn.Module):
         x, hidden = self.GRU(x)
         x = self.dropout(x)
         return x
+
 
 class Model(nn.Module):
     def __init__(self, n_res_layers, n_gru_layers, gru_dim, n_class, n_feats, linear_dim, stride=1,
@@ -84,7 +81,7 @@ class Model(nn.Module):
             print(f'after res net {x.shape}')
             dim = x.size()
             x = x.view(dim[0], dim[1]*dim[2], dim[3])
-            x = x.transpose(1,2)
+            x = x.transpose(1, 2)
             x = self.dense(x)
             print(f'after dense {x.shape}')
             x = self.bi_gru(x)
@@ -96,7 +93,7 @@ class Model(nn.Module):
             x = self.res_cnn(x)
             dim = x.size()
             x = x.view(dim[0], dim[1]*dim[2], dim[3])
-            x = x.transpose(1,2)
+            x = x.transpose(1, 2)
             x = self.dense(x)
             x = self.bi_gru(x)
             x = self.classifier(x)
@@ -110,6 +107,7 @@ def testModel():
 
     model = Model(2, 2, 512, 10, 128, 500, test=True)
     model(test)
+
 
 if __name__ == '__main__':
     testModel()
