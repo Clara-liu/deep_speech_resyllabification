@@ -70,6 +70,7 @@ def converter(wav, sr, nmels=128, tweak=False, verbose=False):
             print(f'tweak: {tweaker}')
     net = nn.Sequential(*layers)
     converted = from_numpy(power_to_db(net(wav)[0]))
+    #converted = net(wav)[0]
     return converted
 
 

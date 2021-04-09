@@ -82,6 +82,7 @@ class Model(nn.Module):
             dim = x.size()
             x = x.view(dim[0], dim[1]*dim[2], dim[3])
             x = x.transpose(1, 2)
+            print(f'after reshape {x.shape}')
             x = self.dense(x)
             print(f'after dense {x.shape}')
             x = self.bi_gru(x)

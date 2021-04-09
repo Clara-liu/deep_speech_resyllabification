@@ -32,3 +32,27 @@ class averager(object):
         if self.n_count != 0:
             res = self.sum / float(self.n_count)
         return res
+
+def WER(preds, targets, blank = 0):
+    argmax_preds = torch.argmax(preds, dim=-1)
+    n_seq = preds.size()[0]
+    n_wrong = 0
+    predicted = []
+    for n in range(n_seq):
+        seq = argmax_preds[n].numpy()
+        n_frame = len(seq)
+        seq_pred = []
+        for t in range(n_frame):
+            current_pred = seq[t]
+            if t == 0:
+                seq_pred.append(current_pred)
+            else:
+                last_pred = seq_pred[-1]
+                if current_pred != last_pred:
+                    seq_pred.append(current_pred)
+        seq_pred = list(filter(lambda a: a != blank, seq_pred))
+        predicted.append(seq_pred)
+        target = targets[n].tolist()
+        if seq_pred != target:
+            n_wrong += 1
+    return n_wrong/n_seq, predicted

@@ -1,0 +1,6 @@
+.DS_Store
+pilot/
+runs/
+stimuli.py
+*pycache__/
+*/__pycache__/
