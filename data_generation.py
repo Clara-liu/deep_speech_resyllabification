@@ -3,10 +3,11 @@ import torchaudio
 import torch
 from random import choice, shuffle
 from librosa import power_to_db
+from librosa.util import normalize
 from os import listdir
 import numpy as np
 import matplotlib.pyplot as plt
-torchaudio.set_audio_backend('sox_io')
+#torchaudio.set_audio_backend('sox_io')
 
 class LabelConvert:
     def __init__(self):
@@ -69,7 +70,7 @@ def converter(wav, sr, nmels=128, tweak=False, verbose=False):
         if verbose:
             print(f'tweak: {tweaker}')
     net = nn.Sequential(*layers)
-    converted = from_numpy(power_to_db(net(wav)[0]))
+    converted = from_numpy(normalize(power_to_db(net(wav)[0])))
     #converted = net(wav)[0]
     return converted
 

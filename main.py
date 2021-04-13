@@ -12,21 +12,21 @@ params_args = {
     'n_res_cnn': 3,
     'n_rnn': 3,
     'rnn_dim': 512,
-    'linear_dim': 300,
+    'linear_dim': 512,
     'n_class': 19,
     'n_feats': 128,
     'stride': 1,
     'dropout': 0.1,
-    'lr': 0.0001,
+    'lr': 0.00001,
     'grad_clip': 400,
-    'batch_size': 30,
-    'n_epochs': 2,
+    'batch_size': 32,
+    'n_epochs': 500,
     'h_rate': 0.1,
     'data_path': 'pilot',
-    'use_enctc': False
+    'use_enctc': True
 }
 # to monitor training
-writer = tensorboard.SummaryWriter('runs/deep_speech_enCTC')
+writer = tensorboard.SummaryWriter('runs/lower_lr_0.00001_epoch_500')
 
 net = Model(params_args['n_res_cnn'], params_args['n_rnn'], params_args['rnn_dim'], params_args['n_class'],
             params_args['n_feats'], params_args['linear_dim'], stride=1, dropout=params_args['dropout'])
