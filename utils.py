@@ -1,10 +1,6 @@
-'''
-available at https://github.com/liuhu-bigeye/enctc.crnn/blob/master/utils.py
-'''
-
 from torch.autograd import Variable
 import torch
-
+from data_generation import LabelConvert
 
 class averager(object):
     """Compute average for `torch.Variable` and `torch.Tensor`. """
@@ -33,7 +29,9 @@ class averager(object):
             res = self.sum / float(self.n_count)
         return res
 
-def WER(preds, targets, blank = 0):
+
+def WER(preds: 'network prediction tensor (n batch, time, n class)', targets: 'target labels (n batch, n target)',
+        blank=0) -> 'wer and predicted targets':
     argmax_preds = torch.argmax(preds, dim=-1)
     n_seq = preds.size()[0]
     n_wrong = 0
@@ -56,3 +54,14 @@ def WER(preds, targets, blank = 0):
         if seq_pred != target:
             n_wrong += 1
     return n_wrong/n_seq, predicted
+
+
+def decode(label_list: 'list of labels') -> 'list of words':
+    if not isinstance(label_list, list):
+        label_list = label_list.tolist()
+    decoded = []
+    decoder = LabelConvert()
+    for seq in label_list:
+        words = ' '.join(decoder.labels_to_words(seq))
+        decoded.append(words)
+    return decoded
