@@ -81,8 +81,8 @@ def checkMel():
     original = converter(waveform, sr=sampling_rate)
     tweaked = converter(waveform, sr=sampling_rate, tweak=True, verbose=True)
     fig, ax = plt.subplots(2)
-    ax[0].imshow(original, aspect='auto', origin = 'lower')
-    ax[1].imshow(tweaked, aspect='auto', origin = 'lower')
+    ax[0].imshow(original, aspect='auto', origin='lower')
+    ax[1].imshow(tweaked, aspect='auto', origin='lower')
 
 
 def loadData(file_path, val_ratio=0.15, train_tweak_ratio=0.3):

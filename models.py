@@ -40,7 +40,7 @@ class ResNet(nn.Module):
 class BiGRU(nn.Module):
     def __init__(self, gru_dim, hidden_size, dropout, batch_first):
         super(BiGRU, self).__init__()
-        self.GRU = nn.GRU(input_size=gru_dim, hidden_size = hidden_size, num_layers=1,
+        self.GRU = nn.GRU(input_size=gru_dim, hidden_size=hidden_size, num_layers=1,
                           batch_first=batch_first, bidirectional=True)
         self.layer_norm = nn.LayerNorm(gru_dim)
         self.dropout = nn.Dropout(dropout)
@@ -55,15 +55,15 @@ class BiGRU(nn.Module):
 
 class Model(nn.Module):
     def __init__(self, n_res_layers, n_gru_layers, gru_dim, n_class, n_feats, linear_dim, stride=1,
-                 dropout=0.1, test=False):
+                 dropout=0.1, convo_channel=16, test=False):
         super(Model, self).__init__()
         self.testing = test
         # initial cnn for feature extraction
-        self.cnn = nn.Conv2d(1, 32, 3, stride=stride, padding=3//2)
+        self.cnn = nn.Conv2d(1, convo_channel, 3, stride=stride, padding=3//2)
         # residual cnns for low level extraction
-        self.res_cnn = nn.Sequential(*[ResNet(32, 32, kernel=(7, 7), stride=1, drop_out=dropout, n_mels = n_feats)
+        self.res_cnn = nn.Sequential(*[ResNet(convo_channel, convo_channel, kernel=(7, 7), stride=1, drop_out=dropout, n_mels=n_feats)
                                        for _ in range(n_res_layers)])
-        self.dense = nn.Linear(n_feats*32, gru_dim)
+        self.dense = nn.Linear(n_feats*convo_channel, gru_dim)
         self.bi_gru = nn.Sequential(*[BiGRU(gru_dim=gru_dim if i ==0 else gru_dim*2, hidden_size=gru_dim,
                                             dropout=dropout, batch_first=i==0) for i in range(n_gru_layers)])
         self.classifier = nn.Sequential(

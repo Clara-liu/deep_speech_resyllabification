@@ -5,44 +5,49 @@ import torch
 import torch.nn.functional as F
 import utils
 from torch.utils import tensorboard
+from torchvision.utils import make_grid
 
 # hyper-parameters and others
 params_args = {
-    'n_res_cnn': 3,
-    'n_rnn': 3,
+    'n_res_cnn': 5,
+    'n_rnn': 4,
     'rnn_dim': 512,
     'linear_dim': 512,
     'n_class': 19,
     'n_feats': 128,
     'stride': 1,
-    'dropout': 0.1,
+    'dropout': 0.2,
+    'n_convos': 32,
     'lr': 0.00001,
     'grad_clip': 400,
     'batch_size': 32,
-    'n_epochs': 500,
+    'n_epochs': 200,
     'h_rate': 0.1,
     'data_path': 'pilot',
     'use_enctc': True
 }
 # to monitor training
-writer = tensorboard.SummaryWriter('runs/lower_lr_0.00001_epoch_500')
-# initiate model
+writer = tensorboard.SummaryWriter('runs/5_resnet_4_gru_lr_0.00001')
+
 net = Model(params_args['n_res_cnn'], params_args['n_rnn'], params_args['rnn_dim'], params_args['n_class'],
-            params_args['n_feats'], params_args['linear_dim'], stride=1, dropout=params_args['dropout'])
-# get training set and validation set
+            params_args['n_feats'], params_args['linear_dim'], stride=1, dropout=params_args['dropout'],
+            convo_channel=params_args['n_convos'])
+
+# load saved model
+#net.load_state_dict(torch.load('model_low_lr_wer87.pth'))
+
 train_data, val_data = loadData(params_args['data_path'])
 
 
 # define optimiser
+
 optimizer = torch.optim.RMSprop(net.parameters(), lr=params_args['lr'])
 
 # train batch function
 def train_enctc(train_iter):
-    # get data for current batch
     specs, labels, input_lens, label_lens = train_iter.next()
     labels = labels.flatten() # (batch)
     preds = net(specs).transpose(0, 1) # (time, batch, vocab +1)
-    # get H and cost for current batch
     H, cost = ctc_ent_cost(preds, labels, input_lens, label_lens)
     cost_total = cost.data.sum()
     inf = float("inf")
@@ -53,15 +58,11 @@ def train_enctc(train_iter):
     # set all gradients to zero
     net.zero_grad()
     optimizer.zero_grad()
-    # back prop
     (-params_args['h_rate']*H + (1-params_args['h_rate'])*cost).backward()
-    # in case of exploding gradients
     torch.nn.utils.clip_grad_norm_(net.parameters(), params_args['grad_clip'])
-    # update network params
     optimizer.step()
 
     return H/len(labels), cost/len(labels)
-
 
 # validation function
 def validation_enctc(val_loader):
@@ -72,21 +73,15 @@ def validation_enctc(val_loader):
     val_h_avg = utils.averager()
     val_loss_avg = utils.averager()
     wer_total = 0
-    # iterate through all batches
     for batch_num, data in enumerate(val_loader):
-        # get data
         specs, labels, input_lens, label_lens = data
-        # get predictions
         preds = net(specs).transpose(0, 1)
         labels_flat = labels.flatten()
-        # calculate cost and H
         H, cost = ctc_ent_cost(preds, labels_flat, input_lens, label_lens)
-        # calculate word error rate
         wer, _ = utils.WER(preds.transpose(0, 1), labels)
         wer_total += wer
         val_h_avg.add(H/len(labels_flat))
         val_loss_avg.add(cost/len(labels_flat))
-    # average between batches
     val_h = val_h_avg.val()
     val_loss = val_loss_avg.val()
     val_wer = wer_total/len(val_loader)
@@ -155,7 +150,6 @@ def main():
             train_loss = loss_avg.val()
             h_avg.reset()
             loss_avg.reset()
-            # validation at end of epoch
             val_h, val_loss, val_wer = validation_enctc(val_loader)
             # write to tensorboard
             writer.add_scalar('train_loss', train_loss, epoch)
@@ -166,13 +160,11 @@ def main():
             print(f'epoch {epoch} wer: {val_wer}')
         writer.close()
     else:
-        # use pytorch ctc loss
         criterion = torch.nn.CTCLoss(blank=0)
         for epoch in range(params_args['n_epochs']):
             print(f'epoch: {epoch}')
             train_loss = train(train_loader, criterion)
             val_loss, val_wer = validation(val_loader, criterion)
-            # write to tensorboard
             writer.add_scalar('train_loss', train_loss, epoch)
             writer.add_scalar('val_loss', val_loss, epoch)
             writer.add_scalar('val_WER', val_wer, epoch)
