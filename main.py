@@ -9,34 +9,33 @@ from torchvision.utils import make_grid
 
 # hyper-parameters and others
 params_args = {
-    'n_res_cnn': 5,
-    'n_rnn': 4,
+    'n_res_cnn': 3,
+    'n_rnn': 5,
     'rnn_dim': 512,
     'linear_dim': 512,
-    'n_class': 19,
-    'n_feats': 128,
+    'n_class': 18,
+    'n_feats': 40,
     'stride': 1,
-    'dropout': 0.2,
+    'dropout': 0.1,
     'n_convos': 32,
     'lr': 0.00001,
     'grad_clip': 400,
     'batch_size': 32,
-    'n_epochs': 200,
+    'n_epochs': 300,
     'h_rate': 0.1,
     'data_path': 'pilot',
-    'use_enctc': True
+    'use_enctc': True,
+    'blank': None
 }
 # to monitor training
-writer = tensorboard.SummaryWriter('runs/5_resnet_4_gru_lr_0.00001')
+writer = tensorboard.SummaryWriter('runs/no_blank_tiral_2_0010_rnn_5')
 
 net = Model(params_args['n_res_cnn'], params_args['n_rnn'], params_args['rnn_dim'], params_args['n_class'],
             params_args['n_feats'], params_args['linear_dim'], stride=1, dropout=params_args['dropout'],
             convo_channel=params_args['n_convos'])
 
-# load saved model
-#net.load_state_dict(torch.load('model_low_lr_wer87.pth'))
 
-train_data, val_data = loadData(params_args['data_path'])
+train_data, val_data = loadData(params_args['data_path'], train_tweak_ratio=0.3)
 
 
 # define optimiser
@@ -48,7 +47,7 @@ def train_enctc(train_iter):
     specs, labels, input_lens, label_lens = train_iter.next()
     labels = labels.flatten() # (batch)
     preds = net(specs).transpose(0, 1) # (time, batch, vocab +1)
-    H, cost = ctc_ent_cost(preds, labels, input_lens, label_lens)
+    H, cost = ctc_ent_cost(preds, labels, input_lens, label_lens, blank=params_args['blank'])
     cost_total = cost.data.sum()
     inf = float("inf")
     # in case of exploding gradient
@@ -77,8 +76,8 @@ def validation_enctc(val_loader):
         specs, labels, input_lens, label_lens = data
         preds = net(specs).transpose(0, 1)
         labels_flat = labels.flatten()
-        H, cost = ctc_ent_cost(preds, labels_flat, input_lens, label_lens)
-        wer, _ = utils.WER(preds.transpose(0, 1), labels)
+        H, cost = ctc_ent_cost(preds, labels_flat, input_lens, label_lens, blank=params_args['blank'])
+        wer, _ = utils.WER(preds.transpose(0, 1), labels, blank=params_args['blank'])
         wer_total += wer
         val_h_avg.add(H/len(labels_flat))
         val_loss_avg.add(cost/len(labels_flat))
@@ -121,7 +120,7 @@ def validation(loader, criterion):
         preds = F.log_softmax(origin_preds, dim=2).transpose(0, 1)
         loss = criterion(preds, labels, input_lens, label_lens)
         total_loss += loss.item()/len(input_lens)
-        wer, _ = utils.WER(origin_preds, labels)
+        wer, _ = utils.WER(origin_preds, labels, blank=params_args['blank'])
         total_wer += wer
     return total_loss/len(loader), total_wer/len(loader)
 
@@ -160,7 +159,7 @@ def main():
             print(f'epoch {epoch} wer: {val_wer}')
         writer.close()
     else:
-        criterion = torch.nn.CTCLoss(blank=0)
+        criterion = torch.nn.CTCLoss(blank=params_args['blank'])
         for epoch in range(params_args['n_epochs']):
             print(f'epoch: {epoch}')
             train_loss = train(train_loader, criterion)

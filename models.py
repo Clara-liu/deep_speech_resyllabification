@@ -106,7 +106,7 @@ def testModel():
     mel_specs, labels, input_lens, label_lens = dataProcess(train)
     test = mel_specs[0].unsqueeze(1)
 
-    model = Model(2, 2, 512, 10, 128, 500, test=True)
+    model = Model(2, 2, 512, 10, 40, 500, test=True)
     model(test)
 
 

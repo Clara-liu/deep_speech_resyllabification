@@ -12,24 +12,24 @@ import matplotlib.pyplot as plt
 class LabelConvert:
     def __init__(self):
         label_map = '''
-        1 bar
-        2 skill
-        3 skull
-        4 bask
-        5 ill
-        6 Earl
-        7 Lee
-        8 steal
-        9 stale
-        10 span
-        11 in
-        12 least
-        13 an
-        14 eel
-        15 cusp
-        16 ale
-        17 Kerr
-        18 spin
+        0 bar
+        1 skill
+        2 skull
+        3 bask
+        4 ill
+        5 Earl
+        6 Lee
+        7 steal
+        8 stale
+        9 span
+        10 in
+        11 least
+        12 an
+        13 eel
+        14 cusp
+        15 ale
+        16 Kerr
+        17 spin
         '''
         # dictionaries to store label to word mapping
         self.syl_map = {}
@@ -50,33 +50,35 @@ class LabelConvert:
         return word_seq
 
 
-def converter(wav, sr, nmels=128, tweak=False, verbose=False):
+def converter(wav, sr, nmels=40, tweak=False, verbose=False):
     win_len = int(sr*0.025)
     hop = int(0.005*sr)
     tweaker = choice(['mask_time', 'mask_frequency', 'both_masks', 'noise'])
-    layers = [torchaudio.transforms.MelSpectrogram(sample_rate=sr, n_mels=nmels, win_length=win_len, n_fft=win_len,
-                                                   hop_length=hop)]
+    mel_net = torchaudio.transforms.MelSpectrogram(sample_rate=sr, n_mels=nmels, win_length=win_len, n_fft=win_len,
+                                                   hop_length=hop)
     if tweak:
         if tweaker != 'noise':
+            tweak_net = []
             if tweaker == 'mask_time':
-                layers.append(torchaudio.transforms.TimeMasking(time_mask_param=20))
+                tweak_net.append(torchaudio.transforms.TimeMasking(time_mask_param=20))
             elif tweaker == 'both_masks':
-                layers.append(torchaudio.transforms.FrequencyMasking(freq_mask_param=15))
-                layers.append(torchaudio.transforms.TimeMasking(time_mask_param=15))
+                tweak_net.append(torchaudio.transforms.FrequencyMasking(freq_mask_param=10))
+                tweak_net.append(torchaudio.transforms.TimeMasking(time_mask_param=15))
             else:
-                layers.append(torchaudio.transforms.FrequencyMasking(freq_mask_param=20))
+                tweak_net.append(torchaudio.transforms.FrequencyMasking(freq_mask_param=10))
+            tweak_net = nn.Sequential(*tweak_net)
         else:
             wav = wav + rand(wav.shape)*0.02
         if verbose:
             print(f'tweak: {tweaker}')
-    net = nn.Sequential(*layers)
-    converted = from_numpy(normalize(power_to_db(net(wav)[0])))
-    #converted = net(wav)[0]
+    converted = from_numpy(normalize(power_to_db(mel_net(wav)[0])))
+    if tweak and tweaker != 'noise':
+        converted = tweak_net(Tensor(converted))
     return converted
 
 
 def checkMel():
-    filename = "pilot/slow_sound_files/Lee_steal_5.wav"
+    filename = "pilot/slow_sound_files/bar_skill_12.wav"
     waveform, sampling_rate = torchaudio.load(filename)
     original = converter(waveform, sr=sampling_rate)
     tweaked = converter(waveform, sr=sampling_rate, tweak=True, verbose=True)

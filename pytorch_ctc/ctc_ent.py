@@ -93,48 +93,83 @@ def ctc_ent_loss_log(pred, pred_len, token, token_len, blank=0):
     eps = 1e-8
 
     # token_with_blank
-    token_with_blank = T.cat((T.zeros(batch, U, 1).type(longX), token[:, :, None]), dim=2).view(batch, -1)    # (batch, 2U)
-    token_with_blank = T.cat((token_with_blank, T.zeros(batch, 1).type(longX)), dim=1)  # (batch, 2U+1)
-    length = token_with_blank.size(1)
+    if blank!= None:
+        token_with_blank = T.cat((T.zeros(batch, U, 1).type(longX), token[:, :, None]), dim=2).view(batch, -1)    # (batch, 2U)
+        token_with_blank = T.cat((token_with_blank, T.zeros(batch, 1).type(longX)), dim=1)  # (batch, 2U+1)
+        length = token_with_blank.size(1)
 
-    pred = pred[T.arange(0, Time).type(longX)[:, None, None], T.arange(0, batch).type(longX)[None, :, None], token_with_blank[None, :]]  # (T, batch, 2U+1)
+        pred = pred[T.arange(0, Time).type(longX)[:, None, None], T.arange(0, batch).type(longX)[None, :, None], token_with_blank[None, :]]  # (T, batch, 2U+1)
 
-    # recurrence relation
-    sec_diag = T.cat((T.zeros((batch, 2)).type(floatX), T.ne(token_with_blank[:, :-2], token_with_blank[:, 2:]).type(floatX)), dim=1) * T.ne(token_with_blank, blank).type(floatX)	# (batch, 2U+1)
-    recurrence_relation = (m_eye(length) + m_eye(length, k=1)).repeat(batch, 1, 1) + m_eye(length, k=2).repeat(batch, 1, 1) * sec_diag[:, None, :]	# (batch, 2U+1, 2U+1)
-    recurrence_relation = eps_nan * (T.ones_like(recurrence_relation) - recurrence_relation)
+        # recurrence relation
+        sec_diag = T.cat((T.zeros((batch, 2)).type(floatX), T.ne(token_with_blank[:, :-2], token_with_blank[:, 2:]).type(floatX)), dim=1) * T.ne(token_with_blank, blank).type(floatX)	# (batch, 2U+1)
+        recurrence_relation = (m_eye(length) + m_eye(length, k=1)).repeat(batch, 1, 1) + m_eye(length, k=2).repeat(batch, 1, 1) * sec_diag[:, None, :]	# (batch, 2U+1, 2U+1)
+        recurrence_relation = eps_nan * (T.ones_like(recurrence_relation) - recurrence_relation)
 
-    # alpha
-    alpha_t = T.cat((pred[0, :, :2], T.ones(batch, 2*U-1).type(floatX)*eps_nan), dim=1) # (batch, 2U+1)
-    beta_t = T.cat((pred[0, :, :2] + T.log(-pred[0, :, :2]+eps),
-                    T.ones(batch, 2*U-1).type(floatX)*eps_nan), dim=1) # (batch, 2U+1)
+        # alpha
+        alpha_t = T.cat((pred[0, :, :2], T.ones(batch, 2*U-1).type(floatX)*eps_nan), dim=1) # (batch, 2U+1)
+        beta_t = T.cat((pred[0, :, :2] + T.log(-pred[0, :, :2]+eps),
+                        T.ones(batch, 2*U-1).type(floatX)*eps_nan), dim=1) # (batch, 2U+1)
 
-    alphas = alpha_t[None] # (1, batch, 2U+1)
-    betas = beta_t[None] # (1, batch, 2U+1)
+        alphas = alpha_t[None] # (1, batch, 2U+1)
+        betas = beta_t[None] # (1, batch, 2U+1)
 
-    # dynamic programming
-    # (T, batch, 2U+1)
-    for t in T.arange(1, Time).type(longX):
-        alpha_t = log_batch_dot(alpha_t, recurrence_relation) + pred[t]
-        beta_t = log_sum_exp(log_batch_dot(beta_t, recurrence_relation) + pred[t], T.log(-pred[t]+eps) + alpha_t)
+        # dynamic programming
+        # (T, batch, 2U+1)
+        for t in T.arange(1, Time).type(longX):
+            alpha_t = log_batch_dot(alpha_t, recurrence_relation) + pred[t]
+            beta_t = log_sum_exp(log_batch_dot(beta_t, recurrence_relation) + pred[t], T.log(-pred[t]+eps) + alpha_t)
+            # for each time point
+            alphas = T.cat((alphas, alpha_t[None]), dim=0)
+            betas = T.cat((betas, beta_t[None]), dim=0)
 
-        alphas = T.cat((alphas, alpha_t[None]), dim=0)
-        betas = T.cat((betas, beta_t[None]), dim=0)
+        def collect_label(probability):
+            labels_2 = probability[pred_len-1, T.arange(batch).type(longX), 2*token_len-1]
+            labels_1 = probability[pred_len-1, T.arange(batch).type(longX), 2*token_len]
+            labels_prob = log_sum_exp(labels_2, labels_1)
+            return labels_prob
 
-    def collect_label(probability):
-        labels_2 = probability[pred_len-1, T.arange(batch).type(longX), 2*token_len-1]
-        labels_1 = probability[pred_len-1, T.arange(batch).type(longX), 2*token_len]
-        labels_prob = log_sum_exp(labels_2, labels_1)
-        return labels_prob
+        alpha = collect_label(alphas)
+        beta = collect_label(betas)
 
-    alpha = collect_label(alphas)
-    beta = collect_label(betas)
+        H = T.exp(beta-alpha) + alpha
+        costs = -alpha
+    else:
+        token = token.type(longX)    # (batch, 2U)
+        pred = pred[T.arange(0, Time).type(longX)[:, None, None], T.arange(0, batch).type(longX)[None, :, None], token[None, :]]
 
-    H = T.exp(beta-alpha) + alpha
-    costs = -alpha
+        recurrence_relation = eps_nan*T.tensor([[0, 0], [1, 0]]).type(floatX).repeat(batch, 1, 1)
+
+        # alpha
+        alpha_t = T.cat((pred[0, :, :1], T.ones(batch, 1).type(floatX)*eps_nan), dim=1) # (batch, U)
+        beta_t = T.cat((pred[0, :, :1] + T.log(-pred[0, :, :1]+eps),
+                        T.ones(batch, 1).type(floatX)*eps_nan), dim=1) # (batch, U)
+
+        alphas = alpha_t[None] # (1, batch, U)
+        betas = beta_t[None] # (1, batch, U)
+
+        # dynamic programming
+        # (T, batch, U)
+        for t in T.arange(1, Time).type(longX):
+            alpha_t = log_batch_dot(alpha_t, recurrence_relation) + pred[t]
+            beta_t = log_sum_exp(log_batch_dot(beta_t, recurrence_relation) + pred[t], T.log(-pred[t]+eps) + alpha_t)
+            # for each time point
+            alphas = T.cat((alphas, alpha_t[None]), dim=0)
+            betas = T.cat((betas, beta_t[None]), dim=0)
+
+        def collect_label(probability):
+            labels_2 = probability[pred_len-1, T.arange(batch).type(longX), token_len-2]
+            labels_1 = probability[pred_len-1, T.arange(batch).type(longX), token_len-1]
+            labels_prob = log_sum_exp(labels_2, labels_1)
+            return labels_prob
+
+        alpha = collect_label(alphas)
+        beta = collect_label(betas)
+
+        H = T.exp(beta-alpha) + alpha
+        costs = -alpha
     return H, costs
 
-def ctc_ent_cost(out, targets, sizes, target_sizes, use_softmax=True, use_log=True, sumed=True):
+def ctc_ent_cost(out, targets, sizes, target_sizes, use_softmax=True, use_log=True, sumed=True, blank=0):
 #    A batched version for uni_alpha_cost
 #    param out: (Time, batch, voca_size+1)
 #    param targets: targets without splited
@@ -165,9 +200,9 @@ def ctc_ent_cost(out, targets, sizes, target_sizes, use_softmax=True, use_log=Tr
         offset += target_size.item()
 
     if not cuda:
-        H, costs = loss_func(pred.cpu(), sizes.data.type(longX), target, target_sizes.data.type(longX))
+        H, costs = loss_func(pred.cpu(), sizes.data.type(longX), target, target_sizes.data.type(longX), blank=blank)
     else:
-        H, costs = loss_func(pred, sizes.data.type(longX), target, target_sizes.data.type(longX))
+        H, costs = loss_func(pred, sizes.data.type(longX), target, target_sizes.data.type(longX), blank=blank)
 
     if sumed:
         return H.sum(), costs.sum()
