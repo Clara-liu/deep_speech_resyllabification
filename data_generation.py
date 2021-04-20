@@ -1,7 +1,9 @@
-from torch import nn, from_numpy, Tensor, utils, rand
+from torch import nn, from_numpy, Tensor, utils, rand, mean
 import torchaudio
 import torch
+from python_speech_features import mfcc
 from random import choice, shuffle
+from math import ceil
 from librosa import power_to_db
 from librosa.util import normalize
 from os import listdir
@@ -48,7 +50,41 @@ class LabelConvert:
         for l in labels:
             word_seq.append(self.label_map[str(l)])
         return word_seq
-
+    def collapse_seqs(self, labels: 'list lists of labels of the words')->'list containing one int for seq class':
+        collapsed = []
+        for l in labels:
+            if 0 in l:
+                if 1 in l:
+                    collapsed_seq = 0
+                else:
+                    collapsed_seq = 1
+            elif 3 in l:
+                if 4 in l:
+                    collapsed_seq = 2
+                else:
+                    collapsed_seq = 3
+            elif 6 in l:
+                if 7 in l:
+                    collapsed_seq = 4
+                else:
+                    collapsed_seq = 5
+            elif 11 in l:
+                if 13 in l:
+                    collapsed_seq = 6
+                else:
+                    collapsed_seq = 7
+            elif 16 in l:
+                if 9 in l:
+                    collapsed_seq = 8
+                else:
+                    collapsed_seq = 9
+            else:
+                if 12 in l:
+                    collapsed_seq = 10
+                else:
+                    collapsed_seq = 11
+            collapsed.append(collapsed_seq)
+        return Tensor(collapsed).type(dtype=torch.long)
 
 def converter(wav, sr, nmels=40, tweak=False, verbose=False):
     win_len = int(sr*0.025)
@@ -76,6 +112,22 @@ def converter(wav, sr, nmels=40, tweak=False, verbose=False):
         converted = tweak_net(Tensor(converted))
     return converted
 
+def converter_mfcc(wav, sr, nmfccs=15, tweak=False):
+    win_len = 0.025
+    hop = 0.005
+    nfft = ceil(sr*win_len)
+    if tweak:
+        wav = wav + rand(wav.shape)*0.02
+        wav = wav.numpy()
+    else:
+        wav = wav.numpy()
+    mfccs = mfcc(wav, samplerate=sr, winlen=win_len, winstep=hop, numcep=nmfccs, nfft=nfft, appendEnergy=False,
+                 winfunc=np.hamming)
+    converted = from_numpy(mfccs).transpose(0, 1)
+    # normalise
+    converted = converted - mean(converted, dim=1)[:, None]
+    return converted.float()
+
 
 def checkMel():
     filename = "pilot/slow_sound_files/bar_skill_12.wav"
@@ -85,6 +137,16 @@ def checkMel():
     fig, ax = plt.subplots(2)
     ax[0].imshow(original, aspect='auto', origin='lower')
     ax[1].imshow(tweaked, aspect='auto', origin='lower')
+
+
+def checkMFCC():
+    filename = "pilot/slow_sound_files/bask_Earl_12.wav"
+    waveform, sampling_rate = torchaudio.load(filename)
+    mfcc_original = converter_mfcc(waveform, sampling_rate, 15)
+    mfcc_tweaked = converter_mfcc(waveform, sampling_rate, 15, tweak=True)
+    fig, ax = plt.subplots(2)
+    ax[0].imshow(mfcc_original, aspect='auto', origin='lower')
+    ax[1].imshow(mfcc_tweaked, aspect='auto', origin='lower')
 
 
 def loadData(file_path, val_ratio=0.15, train_tweak_ratio=0.3):
@@ -125,7 +187,7 @@ def loadData(file_path, val_ratio=0.15, train_tweak_ratio=0.3):
     return train, val
 
 
-def dataProcess(data, train=True):
+def dataProcess(data, train=True, data_type='mel_spec'):
     # initialise label converter
     labeller = LabelConvert()
     # initialise empty lists for data
@@ -133,18 +195,22 @@ def dataProcess(data, train=True):
     labels = []
     input_lens = []
     label_lens = []
+    if data_type == 'mel_spec':
+        convert_func = converter
+    else:
+        convert_func = converter_mfcc
     for item in data:
         # if process training set
         if train:
             wave, sampling_rate, words, aug = item
             if aug == 'tweak':
-                spec = converter(wave, sr=sampling_rate, tweak=True).transpose(0, 1)
+                spec = convert_func(wave, sr=sampling_rate, tweak=True).transpose(0, 1)
             else:
-                spec = converter(wave, sr=sampling_rate).transpose(0, 1)
+                spec = convert_func(wave, sr=sampling_rate).transpose(0, 1)
         # if process validation set
         else:
             wave, sampling_rate, words = item
-            spec = converter(wave, sr=sampling_rate).transpose(0, 1)
+            spec = convert_func(wave, sr=sampling_rate).transpose(0, 1)
         # append data
         mel_specs.append(spec)
         target = Tensor(labeller.words_to_labels(words))
@@ -176,4 +242,5 @@ def checkDataProcess():
 
 if __name__ == '__main__':
     checkMel()
+    checkMFCC()
     checkDataProcess()

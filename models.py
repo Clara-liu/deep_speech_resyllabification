@@ -61,7 +61,7 @@ class Model(nn.Module):
         # initial cnn for feature extraction
         self.cnn = nn.Conv2d(1, convo_channel, 3, stride=stride, padding=3//2)
         # residual cnns for low level extraction
-        self.res_cnn = nn.Sequential(*[ResNet(convo_channel, convo_channel, kernel=(7, 7), stride=1, drop_out=dropout, n_mels=n_feats)
+        self.res_cnn = nn.Sequential(*[ResNet(convo_channel, convo_channel, kernel=(3, 3), stride=1, drop_out=dropout, n_mels=n_feats)
                                        for _ in range(n_res_layers)])
         self.dense = nn.Linear(n_feats*convo_channel, gru_dim)
         self.bi_gru = nn.Sequential(*[BiGRU(gru_dim=gru_dim if i ==0 else gru_dim*2, hidden_size=gru_dim,
@@ -101,13 +101,68 @@ class Model(nn.Module):
             return x
 
 
+class VanillaModel(nn.Module):
+    def __init__(self, n_res_layers, n_gru_layers, gru_dim, n_class, n_feats, linear_dim, stride=1,
+                 dropout=0.1, convo_channel=16, test=False):
+        super(VanillaModel, self).__init__()
+        self.testing = test
+        # initial cnn for feature extraction
+        self.cnn = nn.Conv2d(1, convo_channel, 3, stride=stride, padding=3//2)
+        # residual cnns for low level extraction
+        self.res_cnn = nn.Sequential(*[ResNet(convo_channel, convo_channel, kernel=(3, 3), stride=1, drop_out=dropout, n_mels=n_feats)
+                                       for _ in range(n_res_layers)])
+        self.dense = nn.Linear(n_feats*convo_channel, gru_dim)
+        self.bi_gru = nn.Sequential(*[BiGRU(gru_dim=gru_dim if i ==0 else gru_dim*2, hidden_size=gru_dim,
+                                            dropout=dropout, batch_first=i==0) for i in range(n_gru_layers)])
+        self.classifier = nn.Sequential(
+            nn.Linear(gru_dim*2, linear_dim),
+            nn.GELU(),
+            nn.Dropout(dropout),
+            nn.Linear(linear_dim, n_class)
+        )
+
+    def forward(self, x):
+        if self.testing:
+            x = self.cnn(x)
+            print(f'after first cnn {x.shape}')
+            x = self.res_cnn(x)
+            print(f'after res net {x.shape}')
+            dim = x.size()
+            x = x.view(dim[0], dim[1]*dim[2], dim[3])
+            x = x.transpose(1, 2)
+            print(f'after reshape {x.shape}')
+            x = self.dense(x)
+            print(f'after dense {x.shape}')
+            x = self.bi_gru(x)
+            print(f'after rnn {x.shape}')
+            x = x[:, -1, :]
+            print(f'after taking last time step output {x.shape}')
+            x = self.classifier(x)
+            print(f'final {x.shape}')
+        else:
+            x = self.cnn(x)
+            x = self.res_cnn(x)
+            dim = x.size()
+            x = x.view(dim[0], dim[1]*dim[2], dim[3])
+            x = x.transpose(1, 2)
+            x = self.dense(x)
+            x = self.bi_gru(x)
+            x = x[:, -1, :]
+            x = self.classifier(x)
+            return x
+
+
 def testModel():
     train, val = loadData('pilot')
     mel_specs, labels, input_lens, label_lens = dataProcess(train)
     test = mel_specs[0].unsqueeze(1)
 
-    model = Model(2, 2, 512, 10, 40, 500, test=True)
+    model = Model(2, 2, 512, 18, 40, 500, test=True)
+    model_vanilla = VanillaModel(2, 2, 512, 12, 40, 500, test=True)
+    print('ctc model')
     model(test)
+    print('vanilla model')
+    model_vanilla(test)
 
 
 if __name__ == '__main__':

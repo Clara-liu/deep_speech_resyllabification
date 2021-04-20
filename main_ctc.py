@@ -5,7 +5,6 @@ import torch
 import torch.nn.functional as F
 import utils
 from torch.utils import tensorboard
-from torchvision.utils import make_grid
 
 # hyper-parameters and others
 params_args = {
@@ -28,7 +27,7 @@ params_args = {
     'blank': None
 }
 # to monitor training
-writer = tensorboard.SummaryWriter('runs/no_blank_tiral_2_0010_rnn_5')
+writer = tensorboard.SummaryWriter('runs/no_blank_tiral_4_0100_rnn_5')
 
 net = Model(params_args['n_res_cnn'], params_args['n_rnn'], params_args['rnn_dim'], params_args['n_class'],
             params_args['n_feats'], params_args['linear_dim'], stride=1, dropout=params_args['dropout'],
@@ -167,3 +166,4 @@ def main():
             writer.add_scalar('train_loss', train_loss, epoch)
             writer.add_scalar('val_loss', val_loss, epoch)
             writer.add_scalar('val_WER', val_wer, epoch)
+        writer.close()
