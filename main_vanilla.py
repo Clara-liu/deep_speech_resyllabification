@@ -16,7 +16,7 @@ params_args = {
     'n_convos': 32,
     'lr': 0.0001,
     'batch_size': 32,
-    'n_epochs': 200,
+    'n_epochs': 65,
     'data_path': 'pilot',
 }
 # to monitor training
@@ -84,5 +84,5 @@ def main():
         val_loss, val_accuracy = validation(val_loader, criterion)
         writer.add_scalar('train_loss', train_loss, epoch)
         writer.add_scalar('val_loss', val_loss, epoch)
-        writer.add_scalar('val_WER', val_accuracy, epoch)
+        writer.add_scalar('val_accuracy', val_accuracy, epoch)
     writer.close()

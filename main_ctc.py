@@ -27,7 +27,7 @@ params_args = {
     'blank': None
 }
 # to monitor training
-writer = tensorboard.SummaryWriter('runs/no_blank_tiral_4_0100_rnn_5')
+writer = tensorboard.SummaryWriter('runs/no_blank_tiral_2_0010_rnn_5_40mels')
 
 net = Model(params_args['n_res_cnn'], params_args['n_rnn'], params_args['rnn_dim'], params_args['n_class'],
             params_args['n_feats'], params_args['linear_dim'], stride=1, dropout=params_args['dropout'],

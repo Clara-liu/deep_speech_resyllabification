@@ -50,6 +50,15 @@ class LabelConvert:
         for l in labels:
             word_seq.append(self.label_map[str(l)])
         return word_seq
+    def collapsed_to_words(self, collasped_labels: 'list collapsed labels')-> 'list word sequences':
+        if not isinstance(collasped_labels, list):
+            collasped_labels = collasped_labels.tolist()
+        seq_dict = {0: 'bar skill', 1: 'bar skull', 2: 'bask ill', 3: 'bask Earl', 4: 'Lee steal', 5: 'Lee stale',
+                    6: 'least eel', 7: 'least ale', 8: 'Kerr span', 9: 'Kerr spin', 10: 'cusp an', 11: 'cusp in'}
+        words_seq = []
+        for label in collasped_labels:
+            words_seq.append(seq_dict[label])
+        return words_seq
     def collapse_seqs(self, labels: 'list lists of labels of the words')->'list containing one int for seq class':
         collapsed = []
         for l in labels:
@@ -185,6 +194,18 @@ def loadData(file_path, val_ratio=0.15, train_tweak_ratio=0.3):
             else:
                 train.append((wave, sampling_rate, target_words, 'no_tweak'))
     return train, val
+
+
+def loadNormal(normal_file_path):
+    files = [normal_file_path + '/' + sound for sound in listdir(normal_file_path) if 'wav' in sound]
+    shuffle(files)
+    data = []
+    for sound in files:
+        target_words = sound.split('/')[-1]
+        target_words = target_words.split('_')[:2]
+        wave, sampling_rate = torchaudio.load(sound)
+        data.append((wave, sampling_rate, target_words))
+    return data
 
 
 def dataProcess(data, train=True, data_type='mel_spec'):

@@ -1,5 +1,10 @@
 from torch.autograd import Variable
 import torch
+from sklearn.metrics import confusion_matrix
+import pandas as pd
+import seaborn as sn
+import matplotlib.pyplot as plt
+import numpy as np
 from data_generation import LabelConvert
 
 class averager(object):
@@ -65,3 +70,17 @@ def decode(label_list: 'list of labels') -> 'list of words':
         words = ' '.join(decoder.labels_to_words(seq))
         decoded.append(words)
     return decoded
+
+def confusion_collapsed(ypred: 'prediction matrix made by model', ytrue: 'list target labels'):
+    converter = LabelConvert()
+    predictions = converter.collapsed_to_words(torch.argmax(ypred, 1))
+    targets = converter.collapsed_to_words(converter.collapse_seqs(ytrue))
+    confuse = confusion_matrix(targets, predictions)
+    confuse = pd.DataFrame(confuse, columns=np.unique(predictions), index=np.unique(targets))
+    confuse.index.name = 'Actual'
+    confuse.columns.name = 'Predicted'
+    plt.figure()
+    sn.set(font_scale=1.4)
+    plot = sn.heatmap(confuse, cmap='Blues', cbar=False, annot=True, annot_kws={'size': 15})
+    plot.set_yticklabels(plot.get_yticklabels(), rotation=30)
+    plot.set_xticklabels(plot.get_xticklabels(), rotation=30)
