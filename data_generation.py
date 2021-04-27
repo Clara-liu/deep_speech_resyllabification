@@ -35,6 +35,9 @@ class LabelConvert:
         18 Pete
         19 coop
         '''
+        self.seq_dict = {0: 'Lee steal', 1: 'Lee stale', 2: 'least eel', 3: 'least ale', 4: 'Kerr speel', 5: 'Kerr spale',
+                    6: 'cusp eel', 7: 'cusp ale', 8: 'do mart', 9: 'do meet', 10: 'doom art', 11: 'doom eat',
+                    12: 'coo part', 13: 'coo Pete', 14: 'coop art', 15: 'coop eat'}
         # dictionaries to store label to word mapping
         self.syl_map = {}
         self.label_map = {}
@@ -55,12 +58,9 @@ class LabelConvert:
     def collapsed_to_words(self, collasped_labels: 'list collapsed labels')-> 'list word sequences':
         if not isinstance(collasped_labels, list):
             collasped_labels = collasped_labels.tolist()
-        seq_dict = {0: 'Lee steal', 1: 'Lee stale', 2: 'least eel', 3: 'least ale', 4: 'Kerr speel', 5: 'Kerr spale',
-                    6: 'cusp eel', 7: 'cusp ale', 8: 'do mart', 9: 'do meet', 10: 'doom art', 11: 'doom eat',
-                    12: 'coo part', 13: 'coo Pete', 14: 'coop art', 15: 'coop eat'}
         words_seq = []
         for label in collasped_labels:
-            words_seq.append(seq_dict[label])
+            words_seq.append(self.seq_dict[label])
         return words_seq
     def collapse_seqs(self, labels: 'list lists of labels of the words')->'list containing one int for seq class':
         collapsed = []
@@ -259,7 +259,7 @@ def dataProcess(data, train=True, data_type='mel_spec'):
     return mel_specs, labels, input_lens, label_lens
 
 def checkDataProcess():
-    train_data, val_data = loadData('pilot_0')
+    train_data, val_data = loadData('pilot_1')
     batch_size = 50
     train_loader = utils.data.DataLoader(dataset=train_data, batch_size=batch_size, shuffle=True,
                                          collate_fn = lambda x: dataProcess(x))

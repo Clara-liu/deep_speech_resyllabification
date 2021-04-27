@@ -1,6 +1,5 @@
 from torch.autograd import Variable
 import torch
-from sklearn.metrics import confusion_matrix
 import pandas as pd
 import seaborn as sn
 import matplotlib.pyplot as plt
@@ -73,10 +72,14 @@ def decode(label_list: 'list of labels') -> 'list of words':
 
 def confusion_collapsed(ypred: 'prediction matrix made by model', ytrue: 'list target labels'):
     converter = LabelConvert()
-    predictions = converter.collapsed_to_words(torch.argmax(ypred, 1))
-    targets = converter.collapsed_to_words(converter.collapse_seqs(ytrue))
-    confuse = confusion_matrix(targets, predictions)
-    confuse = pd.DataFrame(confuse, columns=np.unique(predictions), index=np.unique(targets))
+    nlabels = len(converter.seq_dict)
+    labels = [converter.seq_dict[x] for x in range(nlabels)]
+    predictions = torch.argmax(ypred, 1).tolist()
+    targets = converter.collapse_seqs(ytrue).tolist()
+    confuse = np.zeros((nlabels, nlabels))
+    for i in range(len(targets)):
+        confuse[targets[i], predictions[i]] += 1
+    confuse = pd.DataFrame(confuse, columns=labels, index=labels)
     confuse.index.name = 'Actual'
     confuse.columns.name = 'Predicted'
     plt.figure()
