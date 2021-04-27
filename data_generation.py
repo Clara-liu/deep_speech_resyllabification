@@ -14,24 +14,26 @@ import matplotlib.pyplot as plt
 class LabelConvert:
     def __init__(self):
         label_map = '''
-        0 bar
-        1 skill
-        2 skull
-        3 bask
-        4 ill
-        5 Earl
-        6 Lee
-        7 steal
-        8 stale
-        9 span
-        10 in
-        11 least
-        12 an
-        13 eel
-        14 cusp
-        15 ale
-        16 Kerr
-        17 spin
+        0 Lee
+        1 steal
+        2 stale
+        3 least
+        4 eel
+        5 ale
+        6 Kerr
+        7 speel
+        8 spale
+        9 cusp
+        10 do
+        11 meet
+        12 mart
+        13 doom
+        14 art
+        15 eat
+        16 coo
+        17 part
+        18 Pete
+        19 coop
         '''
         # dictionaries to store label to word mapping
         self.syl_map = {}
@@ -53,8 +55,9 @@ class LabelConvert:
     def collapsed_to_words(self, collasped_labels: 'list collapsed labels')-> 'list word sequences':
         if not isinstance(collasped_labels, list):
             collasped_labels = collasped_labels.tolist()
-        seq_dict = {0: 'bar skill', 1: 'bar skull', 2: 'bask ill', 3: 'bask Earl', 4: 'Lee steal', 5: 'Lee stale',
-                    6: 'least eel', 7: 'least ale', 8: 'Kerr span', 9: 'Kerr spin', 10: 'cusp an', 11: 'cusp in'}
+        seq_dict = {0: 'Lee steal', 1: 'Lee stale', 2: 'least eel', 3: 'least ale', 4: 'Kerr speel', 5: 'Kerr spale',
+                    6: 'cusp eel', 7: 'cusp ale', 8: 'do mart', 9: 'do meet', 10: 'doom art', 11: 'doom eat',
+                    12: 'coo part', 13: 'coo Pete', 14: 'coop art', 15: 'coop eat'}
         words_seq = []
         for label in collasped_labels:
             words_seq.append(seq_dict[label])
@@ -77,21 +80,31 @@ class LabelConvert:
                     collapsed_seq = 4
                 else:
                     collapsed_seq = 5
-            elif 11 in l:
-                if 13 in l:
+            elif 9 in l:
+                if 4 in l:
                     collapsed_seq = 6
                 else:
                     collapsed_seq = 7
-            elif 16 in l:
-                if 9 in l:
+            elif 10 in l:
+                if 12 in l:
                     collapsed_seq = 8
                 else:
                     collapsed_seq = 9
-            else:
-                if 12 in l:
+            elif 13 in l:
+                if 14 in l:
                     collapsed_seq = 10
                 else:
                     collapsed_seq = 11
+            elif 16 in l:
+                if 17 in l:
+                    collapsed_seq = 12
+                else:
+                    collapsed_seq = 13
+            else:
+                if 14 in l:
+                    collapsed_seq = 14
+                else:
+                    collapsed_seq = 15
             collapsed.append(collapsed_seq)
         return Tensor(collapsed).type(dtype=torch.long)
 
@@ -139,7 +152,7 @@ def converter_mfcc(wav, sr, nmfccs=15, tweak=False):
 
 
 def checkMel():
-    filename = "pilot/slow_sound_files/bar_skill_12.wav"
+    filename = "pilot_0/slow_sound_files/Lee_stale_12.wav"
     waveform, sampling_rate = torchaudio.load(filename)
     original = converter(waveform, sr=sampling_rate)
     tweaked = converter(waveform, sr=sampling_rate, tweak=True, verbose=True)
@@ -149,7 +162,7 @@ def checkMel():
 
 
 def checkMFCC():
-    filename = "pilot/slow_sound_files/bask_Earl_12.wav"
+    filename = "pilot_0/slow_sound_files/least_eel_1.wav"
     waveform, sampling_rate = torchaudio.load(filename)
     mfcc_original = converter_mfcc(waveform, sampling_rate, 15)
     mfcc_tweaked = converter_mfcc(waveform, sampling_rate, 15, tweak=True)
@@ -171,8 +184,8 @@ def loadData(file_path, val_ratio=0.15, train_tweak_ratio=0.3):
     num_tweak = (len(files)-num_val)*train_tweak_ratio
     val = []
     train = []
-    val_count = 1
-    tweak_count = 1
+    val_count = 0
+    tweak_count = 0
     for sound in files:
         # get target sequence words
         target_words = sound.split('/')[-1]
@@ -246,7 +259,7 @@ def dataProcess(data, train=True, data_type='mel_spec'):
     return mel_specs, labels, input_lens, label_lens
 
 def checkDataProcess():
-    train_data, val_data = loadData('pilot')
+    train_data, val_data = loadData('pilot_0')
     batch_size = 50
     train_loader = utils.data.DataLoader(dataset=train_data, batch_size=batch_size, shuffle=True,
                                          collate_fn = lambda x: dataProcess(x))

@@ -12,34 +12,35 @@ params_args = {
     'n_rnn': 5,
     'rnn_dim': 512,
     'linear_dim': 512,
-    'n_class': 18,
+    'n_class': 20,
     'n_feats': 40,
     'stride': 1,
-    'dropout': 0.1,
+    'dropout': 0.2,
     'n_convos': 32,
-    'lr': 0.00001,
+    'lr': 0.00005,
     'grad_clip': 400,
     'batch_size': 32,
-    'n_epochs': 300,
-    'h_rate': 0.1,
-    'data_path': 'pilot',
+    'n_epochs': 400,
+    'h_rate': 0.0,
+    'data_path': 'pilot_1',
     'use_enctc': True,
     'blank': None
 }
 # to monitor training
-writer = tensorboard.SummaryWriter('runs/no_blank_tiral_2_0010_rnn_5_40mels')
+writer = tensorboard.SummaryWriter('runs/no_blank_tiral_4_pilot_1')
 
 net = Model(params_args['n_res_cnn'], params_args['n_rnn'], params_args['rnn_dim'], params_args['n_class'],
             params_args['n_feats'], params_args['linear_dim'], stride=1, dropout=params_args['dropout'],
             convo_channel=params_args['n_convos'])
 
+net = utils.transfer_param(net, 'vanilla_classifier_pilot_1.pth')
 
 train_data, val_data = loadData(params_args['data_path'], train_tweak_ratio=0.3)
 
 
 # define optimiser
 
-optimizer = torch.optim.RMSprop(net.parameters(), lr=params_args['lr'])
+optimizer = torch.optim.SGD(net.parameters(),lr =params_args['lr'], momentum=0.9)
 
 # train batch function
 def train_enctc(train_iter):

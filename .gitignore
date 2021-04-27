@@ -4,3 +4,4 @@ runs/
 stimuli.py
 *pycache__/
 */__pycache__/
+*.pth

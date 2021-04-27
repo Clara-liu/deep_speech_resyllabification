@@ -84,3 +84,13 @@ def confusion_collapsed(ypred: 'prediction matrix made by model', ytrue: 'list t
     plot = sn.heatmap(confuse, cmap='Blues', cbar=False, annot=True, annot_kws={'size': 15})
     plot.set_yticklabels(plot.get_yticklabels(), rotation=30)
     plot.set_xticklabels(plot.get_xticklabels(), rotation=30)
+
+def transfer_param(net_new: 'new model', path_trained: 'path to pretrained dict'):
+    model_dict = net_new.state_dict()
+    pretrained_dict = torch.load(path_trained)
+    if not isinstance(pretrained_dict, dict):
+        pretrained_dict = pretrained_dict.state_dict()
+    pretrained_dict = {k: v for k, v in pretrained_dict.items() if 'classifier' not in k}
+    model_dict.update(pretrained_dict)
+    net_new.load_state_dict(model_dict)
+    return net_new
