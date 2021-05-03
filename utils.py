@@ -1,7 +1,6 @@
 from torch.autograd import Variable
 import torch
 import pandas as pd
-import seaborn as sn
 import matplotlib.pyplot as plt
 import numpy as np
 from data_generation import LabelConvert
@@ -36,7 +35,7 @@ class averager(object):
 
 def WER(preds: 'network prediction tensor (n batch, time, n class)', targets: 'target labels (n batch, n target)',
         blank=0) -> 'wer and predicted targets':
-    argmax_preds = torch.argmax(preds, dim=-1)
+    argmax_preds = torch.argmax(preds, dim=-1).cpu()
     n_seq = preds.size()[0]
     n_wrong = 0
     predicted = []

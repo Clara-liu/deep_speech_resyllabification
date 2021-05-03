@@ -64,7 +64,7 @@ class Model(nn.Module):
         self.res_cnn = nn.Sequential(*[ResNet(convo_channel, convo_channel, kernel=(3, 3), stride=1, drop_out=dropout, n_mels=n_feats)
                                        for _ in range(n_res_layers)])
         self.dense = nn.Linear(n_feats*convo_channel, gru_dim)
-        self.bi_gru = nn.Sequential(*[BiGRU(gru_dim=gru_dim if i ==0 else gru_dim*2, hidden_size=gru_dim,
+        self.bi_gru = nn.Sequential(*[BiGRU(gru_dim=gru_dim if i == 0 else gru_dim*2, hidden_size=gru_dim,
                                             dropout=dropout, batch_first=True) for i in range(n_gru_layers)])
         self.classifier = nn.Sequential(
             nn.Linear(gru_dim*2, linear_dim),
@@ -112,8 +112,8 @@ class VanillaModel(nn.Module):
         self.res_cnn = nn.Sequential(*[ResNet(convo_channel, convo_channel, kernel=(3, 3), stride=1, drop_out=dropout, n_mels=n_feats)
                                        for _ in range(n_res_layers)])
         self.dense = nn.Linear(n_feats*convo_channel, gru_dim)
-        self.bi_gru = nn.Sequential(*[BiGRU(gru_dim=gru_dim if i ==0 else gru_dim*2, hidden_size=gru_dim,
-                                            dropout=dropout, batch_first=True) for i in range(n_gru_layers)])
+        self.bi_gru = self.bi_gru = nn.Sequential(*[BiGRU(gru_dim=gru_dim if i ==0 else gru_dim*2, hidden_size=gru_dim,
+                                                          dropout=dropout, batch_first=True) for i in range(n_gru_layers)])
         self.classifier = nn.Sequential(
             nn.Linear(gru_dim*2, linear_dim),
             nn.GELU(),
@@ -153,12 +153,12 @@ class VanillaModel(nn.Module):
 
 
 def testModel():
-    train, val = loadData('pilot')
+    train, val = loadData('pilot_0')
     mel_specs, labels, input_lens, label_lens = dataProcess(train)
     test = mel_specs[0].unsqueeze(1)
 
-    model = Model(2, 2, 512, 18, 40, 500, test=True)
-    model_vanilla = VanillaModel(2, 2, 512, 12, 40, 500, test=True)
+    model = Model(2, 5, 512, 18, 40, 500, test=True)
+    model_vanilla = VanillaModel(2, 5, 512, 12, 40, 500, test=True)
     print('ctc model')
     model(test)
     print('vanilla model')

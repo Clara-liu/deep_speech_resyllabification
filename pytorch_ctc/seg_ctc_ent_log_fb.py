@@ -3,13 +3,13 @@ import os
 import torch as T
 from torch.autograd import Variable
 import numpy as np
-import pdb
-import glog
-import copy
-import time
-import m_ctc
 
-cuda = True
+if __name__ == '__main__':
+    import m_ctc
+else:
+    import pytorch_ctc.m_ctc as m_ctc
+
+cuda = False
 if cuda:
     floatX = T.cuda.FloatTensor
 #    floatX = T.cuda.DoubleTensor
@@ -23,9 +23,14 @@ else:
     longX = T.LongTensor
 
 m_ctc.floatX = floatX
-from m_ctc import m_eye, log_batch_dot, log_sum_exp, log_sum_exp_axis
 
-def seg_ctc_ent_cost(out, targets, sizes, target_sizes, uni_rate=1.5):
+if __name__ == '__main__':
+    from m_ctc import log_sum_exp, log_sum_exp_axis
+else:
+    from pytorch_ctc.m_ctc import log_sum_exp, log_sum_exp_axis
+
+
+def seg_ctc_ent_cost(out, targets, sizes, target_sizes, uni_rate=1.5, blank=0):
 #    A batched version for uni_alpha_cost
 #    param out: (Time, batch, voca_size+1)
 #    param targets: targets without splited
@@ -54,9 +59,11 @@ def seg_ctc_ent_cost(out, targets, sizes, target_sizes, uni_rate=1.5):
         uniform_mask[-uni_length:, index] = 1
 
     if not cuda:
-        H, costs = loss_func(pred.cpu(), sizes.data.type(longX), target, target_sizes.data.type(longX), uniform_mask)
+        H, costs = loss_func(pred.cpu(), sizes.data.type(longX), target, target_sizes.data.type(longX), uniform_mask,
+                             blank=blank)
     else:
-        H, costs = loss_func(pred, sizes.data.type(longX), target, target_sizes.data.type(longX), uniform_mask)
+        H, costs = loss_func(pred, sizes.data.type(longX), target, target_sizes.data.type(longX), uniform_mask,
+                             blank=blank)
     return H.sum(), costs.sum()
 
 def test_seg_ctc(use_mine=True):

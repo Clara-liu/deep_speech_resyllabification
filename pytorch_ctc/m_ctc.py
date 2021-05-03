@@ -3,7 +3,7 @@ from torch.autograd import Variable
 import numpy as np
 
 
-cuda = False
+cuda = T.cuda.is_available()
 if cuda:
     floatX = T.cuda.FloatTensor
     intX = T.cuda.IntTensor

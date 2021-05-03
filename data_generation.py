@@ -162,7 +162,7 @@ def checkMel():
 
 
 def checkMFCC():
-    filename = "pilot_0/slow_sound_files/least_eel_1.wav"
+    filename = "pilot_0/slow_sound_files/least_eel_7.wav"
     waveform, sampling_rate = torchaudio.load(filename)
     mfcc_original = converter_mfcc(waveform, sampling_rate, 15)
     mfcc_tweaked = converter_mfcc(waveform, sampling_rate, 15, tweak=True)

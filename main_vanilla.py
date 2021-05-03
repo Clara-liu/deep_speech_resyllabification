@@ -16,15 +16,22 @@ params_args = {
     'n_convos': 32,
     'lr': 0.0001,
     'batch_size': 32,
-    'n_epochs': 90,
+    'n_epochs': 85,
     'data_path': 'pilot_1',
 }
 # to monitor training
-writer = tensorboard.SummaryWriter('runs/vanilla_classification_pilot_1')
+writer = tensorboard.SummaryWriter('runs/vanilla_classification_pilot_1_native_gru')
 # initiate model
 net = VanillaModel(params_args['n_res_cnn'], params_args['n_rnn'], params_args['rnn_dim'], params_args['n_class'],
                    params_args['n_feats'], params_args['linear_dim'], stride=1, dropout=params_args['dropout'],
                    convo_channel=params_args['n_convos'])
+# move model to computing unit
+if torch.cuda.is_available():
+    device = 'cuda:0'
+else:
+    device = 'cpu'
+
+net.to(device)
 
 # load data
 train_data, val_data = loadData(params_args['data_path'], train_tweak_ratio=0.3)
@@ -44,6 +51,7 @@ def train(loader, error):
     for batch_idx, data in enumerate(loader):
         specs, labels, _, _ = data
         labels = converter.collapse_seqs(labels)
+        specs, labels = specs.to(device), labels.to(device)
         optimizer.zero_grad()
         preds = net(specs)
         loss = error(preds, labels)
@@ -62,6 +70,7 @@ def validation(loader, error):
     for batch_idx, data in enumerate(loader):
         specs, labels, _, _ = data
         labels = converter.collapse_seqs(labels)
+        specs, labels = specs.to(device), labels.to(device)
         preds = net(specs)
         loss = error(preds, labels)
         total_loss += loss.item()
@@ -85,4 +94,9 @@ def main():
         writer.add_scalar('train_loss', train_loss, epoch)
         writer.add_scalar('val_loss', val_loss, epoch)
         writer.add_scalar('val_accuracy', val_accuracy, epoch)
+        print(f'epoch {epoch}')
     writer.close()
+
+
+if __name__ == '__main__':
+    main()

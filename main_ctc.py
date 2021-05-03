@@ -7,44 +7,32 @@ import utils
 from torch.utils import tensorboard
 
 # hyper-parameters and others
-params_args = {
+setup = {
     'n_res_cnn': 3,
-    'n_rnn': 5,
+    'n_rnn': 4,
     'rnn_dim': 512,
     'linear_dim': 512,
-    'n_class': 20,
+    'n_class': 6,
     'n_feats': 40,
     'stride': 1,
     'dropout': 0.2,
     'n_convos': 32,
     'lr': 0.00005,
     'grad_clip': 400,
-    'batch_size': 32,
-    'n_epochs': 400,
+    'batch_size': 16,
+    'n_epochs': 300,
     'h_rate': 0.0,
-    'data_path': 'pilot_1',
+    'data_path': 'pilot_0',
     'use_enctc': True,
-    'blank': None
+    'blank': None,
+    'tweak': 0.3
 }
-# to monitor training
-writer = tensorboard.SummaryWriter('runs/no_blank_tiral_4_pilot_1')
 
-net = Model(params_args['n_res_cnn'], params_args['n_rnn'], params_args['rnn_dim'], params_args['n_class'],
-            params_args['n_feats'], params_args['linear_dim'], stride=1, dropout=params_args['dropout'],
-            convo_channel=params_args['n_convos'])
-
-net = utils.transfer_param(net, 'vanilla_classifier_pilot_1.pth')
-
-train_data, val_data = loadData(params_args['data_path'], train_tweak_ratio=0.3)
-
-
-# define optimiser
-
-optimizer = torch.optim.SGD(net.parameters(),lr =params_args['lr'], momentum=0.9)
 
 # train batch function
-def train_enctc(train_iter):
+def train_enctc(train_iter, device, net, optimizer, params_args):
     specs, labels, input_lens, label_lens = train_iter.next()
+    specs = specs.to(device)
     labels = labels.flatten() # (batch)
     preds = net(specs).transpose(0, 1) # (time, batch, vocab +1)
     H, cost = ctc_ent_cost(preds, labels, input_lens, label_lens, blank=params_args['blank'])
@@ -64,7 +52,7 @@ def train_enctc(train_iter):
     return H/len(labels), cost/len(labels)
 
 # validation function
-def validation_enctc(val_loader):
+def validation_enctc(val_loader, device, net, params_args):
     for p in net.parameters():
         p.requires_grad = False
     net.eval()
@@ -74,6 +62,7 @@ def validation_enctc(val_loader):
     wer_total = 0
     for batch_num, data in enumerate(val_loader):
         specs, labels, input_lens, label_lens = data
+        specs = specs.to(device)
         preds = net(specs).transpose(0, 1)
         labels_flat = labels.flatten()
         H, cost = ctc_ent_cost(preds, labels_flat, input_lens, label_lens, blank=params_args['blank'])
@@ -90,13 +79,14 @@ def validation_enctc(val_loader):
     return val_h, val_loss, val_wer
 
 
-def train(loader, criterion):
+def train(loader, criterion, device, net, optimizer):
     net.train()
     total_loss = 0
     for p in net.parameters():
         p.requires_grad = True
     for batch_idx, data in enumerate(loader):
         specs, labels, input_lens, label_lens = data
+        specs = specs.to(device)
         optimizer.zero_grad()
         preds = net(specs)
         preds = F.log_softmax(preds, dim=2).transpose(0, 1)
@@ -108,7 +98,7 @@ def train(loader, criterion):
     return total_loss/len(loader)
 
 
-def validation(loader, criterion):
+def validation(loader, criterion, device, net, params_args):
     net.eval()
     total_loss = 0
     total_wer = 0
@@ -116,6 +106,7 @@ def validation(loader, criterion):
         p.requires_grad = False
     for batch_idx, data in enumerate(loader):
         specs, labels, input_lens, label_lens = data
+        specs = specs.to(device)
         origin_preds = net(specs)
         preds = F.log_softmax(origin_preds, dim=2).transpose(0, 1)
         loss = criterion(preds, labels, input_lens, label_lens)
@@ -125,11 +116,32 @@ def validation(loader, criterion):
     return total_loss/len(loader), total_wer/len(loader)
 
 
-def main():
+def main(params_args, trial):
+    # to monitor training
+    writer = tensorboard.SummaryWriter(f'runs/{trial}')
+
+    net = Model(params_args['n_res_cnn'], params_args['n_rnn'], params_args['rnn_dim'], params_args['n_class'],
+                params_args['n_feats'], params_args['linear_dim'], stride=1, dropout=params_args['dropout'],
+                convo_channel=params_args['n_convos'])
+
+    train_data, val_data = loadData(params_args['data_path'], train_tweak_ratio=params_args['tweak'])
+
+    # move model to computing unit
+    if torch.cuda.is_available():
+        device = 'cuda:0'
+    else:
+        device = 'cpu'
+
+    net.to(device)
+
+    # define optimiser
+
+    optimizer = torch.optim.SGD(net.parameters(), lr=params_args['lr'], momentum=0.9)
+
     train_loader = torch.utils.data.DataLoader(dataset=train_data, batch_size=params_args['batch_size'],
                                                shuffle=True, collate_fn=lambda x: dataProcess(x))
     val_loader = torch.utils.data.DataLoader(dataset=val_data, batch_size=params_args['batch_size'], shuffle=True,
-                                         collate_fn=lambda x: dataProcess(x, train=False))
+                                             collate_fn=lambda x: dataProcess(x, train=False))
     if params_args['use_enctc']:
         for epoch in range(params_args['n_epochs']):
             # loss averager for each epoch
@@ -140,7 +152,7 @@ def main():
                 for p in net.parameters():
                     p.requires_grad = True
                 net.train()
-                H, cost = train_enctc(train_iter)
+                H, cost = train_enctc(train_iter, device, net, optimizer, params_args)
                 print(f'epoch {epoch}: batch {i} cost: {cost}')
                 # record training loss for each batch
                 h_avg.add(H)
@@ -149,7 +161,7 @@ def main():
             train_loss = loss_avg.val()
             h_avg.reset()
             loss_avg.reset()
-            val_h, val_loss, val_wer = validation_enctc(val_loader)
+            val_h, val_loss, val_wer = validation_enctc(val_loader, device, net, params_args)
             # write to tensorboard
             writer.add_scalar('train_loss', train_loss, epoch)
             writer.add_scalar('train_h', train_h, epoch)
@@ -162,9 +174,12 @@ def main():
         criterion = torch.nn.CTCLoss(blank=params_args['blank'])
         for epoch in range(params_args['n_epochs']):
             print(f'epoch: {epoch}')
-            train_loss = train(train_loader, criterion)
-            val_loss, val_wer = validation(val_loader, criterion)
+            train_loss = train(train_loader, criterion, device, net, optimizer)
+            val_loss, val_wer = validation(val_loader, criterion, device, net, params_args)
             writer.add_scalar('train_loss', train_loss, epoch)
             writer.add_scalar('val_loss', val_loss, epoch)
             writer.add_scalar('val_WER', val_wer, epoch)
         writer.close()
+
+if __name__ == '__main__':
+    main(setup, 'test')
