@@ -9,19 +9,19 @@ from torch.utils import tensorboard
 # hyper-parameters and others
 setup = {
     'n_res_cnn': 3,
-    'n_rnn': 4,
+    'n_rnn': 5,
     'rnn_dim': 512,
     'linear_dim': 512,
     'n_class': 6,
     'n_feats': 40,
     'stride': 1,
-    'dropout': 0.2,
-    'n_convos': 32,
+    'dropout': 0.1,
+    'n_convos': 16,
     'lr': 0.00005,
     'grad_clip': 400,
-    'batch_size': 16,
+    'batch_size': 32,
     'n_epochs': 300,
-    'h_rate': 0.0,
+    'h_rate': 0.2,
     'data_path': 'pilot_0',
     'use_enctc': True,
     'blank': None,
@@ -118,7 +118,7 @@ def validation(loader, criterion, device, net, params_args):
 
 def main(params_args, trial):
     # to monitor training
-    writer = tensorboard.SummaryWriter(f'runs/{trial}')
+    writer = tensorboard.SummaryWriter(trial)
 
     net = Model(params_args['n_res_cnn'], params_args['n_rnn'], params_args['rnn_dim'], params_args['n_class'],
                 params_args['n_feats'], params_args['linear_dim'], stride=1, dropout=params_args['dropout'],
