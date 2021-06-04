@@ -21,7 +21,7 @@ setup = {
     'grad_clip': 400,
     'batch_size': 32,
     'n_epochs': 300,
-    'h_rate': 0.2,
+    'h_rate': 0.0,
     'data_path': 'pilot_0',
     'use_enctc': True,
     'blank': None,

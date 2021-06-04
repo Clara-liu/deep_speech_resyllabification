@@ -3,6 +3,7 @@ import torch
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
+import seaborn as sn
 from data_generation import LabelConvert
 
 class averager(object):
@@ -96,3 +97,12 @@ def transfer_param(net_new: 'new model', path_trained: 'path to pretrained dict'
     model_dict.update(pretrained_dict)
     net_new.load_state_dict(model_dict)
     return net_new
+
+def early_stopping(eval_metric_log, stop_threshold = 0.96):
+    if len(eval_metric_log) < 6:
+        stop = False
+    else:
+        past_n_mean = sum(eval_metric_log[-5:])/5
+        if past_n_mean >= stop_threshold:
+            stop = True
+    return stop

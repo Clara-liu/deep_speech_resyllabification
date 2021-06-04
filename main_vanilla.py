@@ -2,6 +2,7 @@ from models import VanillaModel
 from data_generation import dataProcess, loadData, LabelConvert
 import torch
 from torch.utils import tensorboard
+from utils import early_stopping
 
 # hyper-parameters and others
 params_args = {
@@ -17,10 +18,10 @@ params_args = {
     'lr': 0.0001,
     'batch_size': 32,
     'n_epochs': 85,
-    'data_path': 'pilot_1',
+    'data_path': 'pilot_2/KZ',
 }
 # to monitor training
-writer = tensorboard.SummaryWriter('runs/vanilla_classification_pilot_1_native_gru')
+writer = tensorboard.SummaryWriter('runs/vanilla_classification_pilot_2_KZ')
 # initiate model
 net = VanillaModel(params_args['n_res_cnn'], params_args['n_rnn'], params_args['rnn_dim'], params_args['n_class'],
                    params_args['n_feats'], params_args['linear_dim'], stride=1, dropout=params_args['dropout'],
@@ -88,13 +89,17 @@ def main():
     val_loader = torch.utils.data.DataLoader(dataset=val_data, batch_size=params_args['batch_size'], shuffle=True,
                                          collate_fn=lambda x: dataProcess(x, train=False))
     criterion = torch.nn.CrossEntropyLoss()
+    metric_log = []
     for epoch in range(params_args['n_epochs']):
         train_loss = train(train_loader, criterion)
         val_loss, val_accuracy = validation(val_loader, criterion)
+        metric_log.append(val_accuracy)
         writer.add_scalar('train_loss', train_loss, epoch)
         writer.add_scalar('val_loss', val_loss, epoch)
         writer.add_scalar('val_accuracy', val_accuracy, epoch)
         print(f'epoch {epoch}')
+        if early_stopping(metric_log):
+            break
     writer.close()
 
 
