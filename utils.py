@@ -105,4 +105,6 @@ def early_stopping(eval_metric_log, stop_threshold = 0.96):
         past_n_mean = sum(eval_metric_log[-5:])/5
         if past_n_mean >= stop_threshold:
             stop = True
+        else:
+            stop = False
     return stop
