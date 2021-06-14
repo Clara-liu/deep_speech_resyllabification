@@ -1,8 +1,11 @@
 from models import VanillaModel
-from data_generation import dataProcess, loadData, LabelConvert
+from data_generation import dataProcess, loadData, LabelConvert, loadNormal, processNormal
 import torch
 from torch.utils import tensorboard
-from utils import early_stopping
+from utils import early_stopping, confusion_collapsed
+import matplotlib.pyplot as plt
+import os
+from shutil import copyfile
 
 # hyper-parameters and others
 params_args = {
@@ -81,6 +84,34 @@ def validation(loader, error):
         total_accuracy += accuracy
     return total_loss/len(loader), total_accuracy/len(loader)
 
+def plotSortNorm():
+    data = loadNormal(f'{params_args["data_path"]}/normal_sound_files')
+    mel_specs, labels, reps = processNormal(data)
+    pred = net(mel_specs)
+    # plot and save confusion plot
+    confusion_collapsed(pred, labels)
+    plt.savefig(f'{params_args["data_path"]}/{params_args["data_path"].split("/")[-1]}_norm.jpg')
+    plt.close()
+    # sort sound files
+    predictions = torch.argmax(pred, 1).tolist()
+    targets = converter.collapse_seqs(labels).tolist()
+    resyllabified_dir = f'{params_args["data_path"]}/normal_sound_files/resyllabified'
+    non_resyllabified_dir = f'{params_args["data_path"]}/normal_sound_files/non_resyllabified'
+    os.mkdir(resyllabified_dir)
+    os.mkdir(non_resyllabified_dir)
+    coda_condition = [2, 3, 6, 7, 10, 11, 14, 15]
+    for i in range(len(predictions)):
+        p = predictions[i]
+        t = targets[i]
+        sound = f'{converter.seq_dict[t].replace(" ", "_")}_{reps[i]}.wav'
+        old_path = f'{params_args["data_path"]}/normal_sound_files/{sound}'
+        if t in coda_condition:
+            if (t-2) == p:
+                new_path = f'{resyllabified_dir}/{sound}'
+                copyfile(old_path, new_path)
+            elif t == p:
+                new_path = f'{non_resyllabified_dir}/{sound}'
+                copyfile(old_path, new_path)
 
 
 def main():
@@ -101,7 +132,13 @@ def main():
         if early_stopping(metric_log):
             break
     writer.close()
-
+    # plot and save confusion heatmap for validation set
+    mel_specs, labels, _, _ = dataProcess(train)
+    pred = net(mel_specs)
+    confusion_collapsed(pred, labels)
+    plt.savefig(f'{params_args["data_path"]}/{params_args["data_path"].split("/")[-1]}_val.jpg')
+    plt.close()
 
 if __name__ == '__main__':
     main()
+    plotSortNorm()

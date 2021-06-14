@@ -215,10 +215,36 @@ def loadNormal(normal_file_path):
     data = []
     for sound in files:
         target_words = sound.split('/')[-1]
+        word_rep = (target_words.split('_')[-1]).strip('.wav')
         target_words = target_words.split('_')[:2]
         wave, sampling_rate = torchaudio.load(sound)
-        data.append((wave, sampling_rate, target_words))
+        data.append((wave, sampling_rate, target_words, word_rep))
     return data
+
+def processNormal(data, data_type='mel_spec'):
+    # initialise label converter
+    labeller = LabelConvert()
+    # initialise empty lists for data
+    mel_specs = []
+    labels = []
+    reps = []
+    if data_type == 'mel_spec':
+        convert_func = converter
+    else:
+        convert_func = converter_mfcc
+    for item in data:
+        wave, sampling_rate, words, rep = item
+        spec = convert_func(wave, sr=sampling_rate).transpose(0, 1)
+        # append data
+        mel_specs.append(spec)
+        target = Tensor(labeller.words_to_labels(words))
+        labels.append(target)
+        reps.append(int(rep))
+    # pad sequences in the batch
+    mel_specs = nn.utils.rnn.pad_sequence(mel_specs, batch_first=True).unsqueeze(1).transpose(2, 3)
+    labels = nn.utils.rnn.pad_sequence(labels, batch_first=True).int()
+    reps = Tensor(reps).int()
+    return mel_specs, labels, reps
 
 
 def dataProcess(data, train=True, data_type='mel_spec'):

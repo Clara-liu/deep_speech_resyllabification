@@ -82,11 +82,13 @@ def confusion_collapsed(ypred: 'prediction matrix made by model', ytrue: 'list t
     confuse = pd.DataFrame(confuse, columns=labels, index=labels)
     confuse.index.name = 'Actual'
     confuse.columns.name = 'Predicted'
-    plt.figure()
+    plt.figure(figsize=(12, 10))
     sn.set(font_scale=1.4)
     plot = sn.heatmap(confuse, cmap='Blues', cbar=False, annot=True, annot_kws={'size': 15})
     plot.set_yticklabels(plot.get_yticklabels(), rotation=30)
     plot.set_xticklabels(plot.get_xticklabels(), rotation=30)
+
+
 
 def transfer_param(net_new: 'new model', path_trained: 'path to pretrained dict'):
     model_dict = net_new.state_dict()
