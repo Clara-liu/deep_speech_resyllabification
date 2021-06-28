@@ -83,7 +83,7 @@ def main(sounds_path, aug_ratio, speaker_name):
     """Speed up sounds with random factors"""
     # get list of sound file paths
     cwd = os.getcwd()
-    sounds = [cwd + '/' + speaker_name + '/slow_sound_files/' + s for s in os.listdir(sounds_path) if 'wav' in s]
+    sounds = [cwd + '/' + speaker_name + '/slow_sound_files/dereverbed/' + s for s in os.listdir(sounds_path) if 'wav' in s]
     shuffle(sounds)
     # create a folder for the new files
     new_dir = cwd + '/' + speaker_name + '/sped_up'
@@ -105,4 +105,4 @@ def main(sounds_path, aug_ratio, speaker_name):
         do_command('RemoveTracks:')
 if __name__ == '__main__':
     quick_test()
-    main('pilot_2/PC/slow_sound_files', 0.5, 'pilot_2/PC')
+    main('pilot_2/FE/slow_sound_files/dereverbed', 0.5, 'pilot_2/FE')

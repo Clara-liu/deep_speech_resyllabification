@@ -133,7 +133,7 @@ def main():
             break
     writer.close()
     # plot and save confusion heatmap for validation set
-    mel_specs, labels, _, _ = dataProcess(train)
+    mel_specs, labels, _, _ = dataProcess(val_data, train=False)
     pred = net(mel_specs)
     confusion_collapsed(pred, labels)
     plt.savefig(f'{params_args["data_path"]}/{params_args["data_path"].split("/")[-1]}_val.jpg')

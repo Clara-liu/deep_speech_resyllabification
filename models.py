@@ -109,7 +109,7 @@ class VanillaModel(nn.Module):
         # initial cnn for feature extraction
         self.cnn = nn.Conv2d(1, convo_channel, 3, stride=stride, padding=3//2)
         # residual cnns for low level extraction
-        self.res_cnn = nn.Sequential(*[ResNet(convo_channel, convo_channel, kernel=(3, 3), stride=1, drop_out=dropout, n_mels=n_feats)
+        self.res_cnn = nn.Sequential(*[ResNet(convo_channel, convo_channel, kernel=(5, 5), stride=1, drop_out=dropout, n_mels=n_feats)
                                        for _ in range(n_res_layers)])
         self.dense = nn.Linear(n_feats*convo_channel, gru_dim)
         self.bi_gru = self.bi_gru = nn.Sequential(*[BiGRU(gru_dim=gru_dim if i ==0 else gru_dim*2, hidden_size=gru_dim,
