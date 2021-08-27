@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sn
 from data_generation import LabelConvert
+from os import listdir
 
 class averager(object):
     """Compute average for `torch.Variable` and `torch.Tensor`. """
@@ -100,7 +101,8 @@ def transfer_param(net_new: 'new model', path_trained: 'path to pretrained dict'
     net_new.load_state_dict(model_dict)
     return net_new
 
-def early_stopping(eval_metric_log, stop_threshold = 0.96):
+
+def early_stopping(eval_metric_log, stop_threshold=0.985):
     if len(eval_metric_log) < 6:
         stop = False
     else:
@@ -110,3 +112,32 @@ def early_stopping(eval_metric_log, stop_threshold = 0.96):
         else:
             stop = False
     return stop
+
+def count_resyllabified(speakers: 'list', folder = 'pilot_2', plot = True, return_data=False):
+    # create data frame for counting
+    coda_words = ['least_eel', 'least_ale', 'cusp_eel', 'cusp_ale', 'doom_art', 'doom_eat', 'coop_art', 'coop_eat']
+    data = {'Speaker': [], 'Word': [], 'Pair': [], 'Count': [0 for i in range(8*len(speakers))]}
+    for s in speakers:
+        data['Speaker'] = data['Speaker'] + [s for i in range(8)]
+        data['Word'] = data['Word'] + coda_words
+        data['Pair'] = data['Pair'] + [0, 0, 1, 1, 2, 2, 3, 3]
+    data = pd.DataFrame.from_dict(data)
+    # loop through each speaker's files and count
+    for ss in speakers:
+        # get files for each speaker
+        path = f'{folder}/{ss}/normal_sound_files/resyllabified'
+        files = listdir(path)
+        # count
+        for f in files:
+            # get words
+            words = '_'.join(f.split('_')[0:2])
+            # find the row idx in predefined dataframe
+            condition = (data['Speaker'] == ss) & (data['Word'] == words)
+            idx = data.index[condition]
+            data.loc[idx, 'Count'] += 1
+    if plot:
+        grid = sn.FacetGrid(data, row='Speaker')
+        grid.map_dataframe(sn.barplot, x='Word', y='Count', hue='Pair', palette='Set2')
+        grid.add_legend()
+    if return_data:
+        return data
