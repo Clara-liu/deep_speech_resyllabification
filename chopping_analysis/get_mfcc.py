@@ -81,7 +81,7 @@ def match_onset(folder_path: 'path to the folder that needs matching',
             # copy the resyllabified sound file to the new folder
             copyfile(f'{folder_path}/{target}', f'{matching_path}/{target}')
 
-def read_wav_files(folder_path)-> 'dict with word as key and wav object as item':
+def read_wav_files(folder_path: 'path to folder containing the wav files')-> 'dict with word as key and wav object as item':
     sound_files = [f'{folder_path}/{x}' for x in listdir(folder_path)]
     wav_dict = {file.split('.')[-2].split('/')[-1]: wav.read(file) for file in sound_files}
     return wav_dict
@@ -135,8 +135,44 @@ def get_all_speakers_mfcc(speakers: 'list speakers', combined_df_path: 'path to 
     all_speakers_df.to_csv(combined_df_path, sep='\t', index=False)
 
 
+def subset_pair_condition(folder_path: 'path to folder to save the subsetted data',
+                          all_speaker_df_path: 'path to all speaker data file'):
+    # read combined df from all speakers
+    combined_df = pd.read_csv(all_speaker_df_path, sep='\t')
+    # get the unique pair numbers
+    pairs = pd.unique(combined_df['Pair'])
+    # get the unique conditions
+    conditions = pd.unique(combined_df['Condition'])
+    # create new folder for subsetted dfs
+    new_folder_path = f'{folder_path}/byPair'
+    if not path.exists(new_folder_path):
+        makedirs(new_folder_path)
+    else:
+        rmtree(new_folder_path)
+        makedirs(new_folder_path)
+    # loop through the paris and conditions and subset combined df
+    for p in pairs:
+        for c in conditions:
+            current_file_path = f'{new_folder_path}/P{p}_{c}.txt'
+            current_df = combined_df[(combined_df['Pair'] == p) & (combined_df['Condition'] == c)]
+            current_df.to_csv(current_file_path, sep='\t', index=False)
 
 
+def main(speakers: 'list of speakers',
+         path_to_combined: 'path to save the combined df',
+         condition: 'resyllabified or non_resyllabified',
+         nmfcc: 'int number of mfcc to extract',
+         path_to_subsetted):
+    get_all_speakers_mfcc(speakers, path_to_combined, condition, nmfcc)
+    subset_pair_condition(path_to_subsetted, path_to_combined)
+
+
+if __name__ == '__main__':
+    main(['FE', 'BS', 'RB', 'GJ', 'TB'],
+         '../pilot_2/mfcc_data/all_speakers_resyllabified_condition.txt',
+         'resyllabified',
+         15,
+         '../pilot_2/mfcc_data/resyllabified')
 
 
 
