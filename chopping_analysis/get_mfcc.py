@@ -1,6 +1,5 @@
 import pandas as pd
 import scipy.io.wavfile as wav
-from sklearn.preprocessing import MinMaxScaler
 from sklearn.preprocessing import StandardScaler
 import numpy as np
 from shutil import copyfile, rmtree
