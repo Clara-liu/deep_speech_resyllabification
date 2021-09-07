@@ -53,7 +53,7 @@ def prep_data(df: 'pandas mfcc df', interval: 'sampling hop of mfcc df',
     x_test = X[ntrain:, :, :]
     y_test = Y[ntrain:, :]
 
-    data = {'train': (x_train, y_train), 'test': (x_test, y_test)}
+    data = {'train': [x_train, y_train], 'test': [x_test, y_test]}
     return data
 
 
@@ -100,30 +100,68 @@ def get_acc(net_config: 'tuple hyperparameters', data: 'dict train/test sets') -
 def chop_n_get_acc(pair: 'str pair label', condition: 'str onset or coda',
                    data: 'dict train/test sets', net_config, min_frame: 'int final token length' = 5) -> 'pd dataframe ' \
                     'of test set acc as a function of remaining token length':
+    # list for recording rows
     analysis_data = []
+    # total number of frames
     total_nframe = data['train'][0].shape[1]
+    # how many times to chop
     nchop = total_nframe - min_frame
-    for chop in nchop:
+    # loop through all chops
+    for n in range(nchop):
+        # calculate remaining duration
         remaining_dur = data['train'][0].shape[1]*0.005
-        if chop == 0:
+        # get result for full length tokens
+        if n == 0:
             loss, acc = get_acc(net_config, data)
+        # chop
         else:
             data['train'][0] = chop(data['train'][0])
             data['test'][0] = chop(data['test'][0])
             loss, acc = get_acc(net_config, data)
+        # record results
         analysis_data.append([remaining_dur, acc])
+    # convert recorded result to pd dataframe
     analysis_data = pd.DataFrame(analysis_data, columns=['Remaining_dur', 'Accuracy'])
+    # record various labels
     analysis_data['Pair'] = pair
     analysis_data['Condition'] = condition
     return analysis_data
 
 
-# testing
 
-df = pd.read_csv('../pilot_2/mfcc_data/resyllabified/byPair/P0_Coda.txt', sep='\t')
-data = prep_data(df, 0.005, 0.8)
-pair = 'P0'
-condition = 'Coda'
-config = (15, 0.2, 20, 0.3, 'sum', 32, 'adam', 30, 0.001)
+def analyse(syllabification_condition: 'resyllabified or non_resyllabified',
+            ntrial: 'number of times to repeat the chopping analysis',
+            config: 'NN hyperparameter config') -> 'pd datafram of chopping analysis':
+    # path to folder containiing the minimal pair dfs
+    df_folder_path = f'../pilot_2/mfcc_data/{syllabification_condition}/byPair'
+    # read the file names
+    files = listdir(df_folder_path)
+    # loop through all the files
+    for f in files:
+        # det file path
+        file_path = f'{df_folder_path}/{f}'
+        # read the df
+        df = pd.read_csv(file_path, sep = '\t')
+        # get pair label
+        pair = f.split('_')[0]
+        # get condition label: onset or coda
+        condition = f.split('_')[1].split('.')[0]
+        # loop through all trials
+        for i in range(ntrial):
+            # get test/train data and randomise
+            data = prep_data(df, 0.005, 0.8)
+            # get result
+            current_result = chop_n_get_acc(pair, condition, data, config)
+            # record repetition/trial number
+            current_result['Rep'] = i
+            # concat result dfs
+            if i == 0 and files.index(f) == 0:
+                result = current_result
+            else:
+                result = pd.concat([result, current_result])
+    result.to_csv(f'chopping_result_{syllabification_condition}.txt', sep='\t', index=False)
 
-test = chop_n_get_acc(pair, condition, data, config)
+
+if __name__ == '__main__':
+    analyse('resyllabified', 10, (15, 0.2, 20, 0.3, 'sum', 32, 'adam', 45, 0.001))
+
