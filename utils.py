@@ -113,7 +113,8 @@ def early_stopping(eval_metric_log, stop_threshold=0.985):
             stop = False
     return stop
 
-def count_resyllabified(speakers: 'list', folder = 'pilot_2', plot = True, return_data=False):
+def count_resyllabified(speakers: 'list', resyllabification_condition: 'resyllabified or not',
+                        folder = 'pilot_2', plot = True, return_data=False):
     # create data frame for counting
     coda_words = ['least_eel', 'least_ale', 'cusp_eel', 'cusp_ale', 'doom_art', 'doom_eat', 'coop_art', 'coop_eat']
     data = {'Speaker': [], 'Word': [], 'Pair': [], 'Count': [0 for i in range(8*len(speakers))]}
@@ -125,7 +126,7 @@ def count_resyllabified(speakers: 'list', folder = 'pilot_2', plot = True, retur
     # loop through each speaker's files and count
     for ss in speakers:
         # get files for each speaker
-        path = f'{folder}/{ss}/normal_sound_files/resyllabified'
+        path = f'{folder}/{ss}/normal_sound_files/{resyllabification_condition}'
         files = listdir(path)
         # count
         for f in files:

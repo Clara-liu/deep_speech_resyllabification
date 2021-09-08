@@ -129,7 +129,7 @@ def chop_n_get_acc(pair: 'str pair label', condition: 'str onset or coda',
 
 
 
-def analyse(syllabification_condition: 'resyllabified or non_resyllabified',
+def analyse(syllabification_condition: 'resyllabified or non_resyllabified or slow',
             ntrial: 'number of times to repeat the chopping analysis',
             config: 'NN hyperparameter config') -> 'pd datafram of chopping analysis':
     # path to folder containiing the minimal pair dfs

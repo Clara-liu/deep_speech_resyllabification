@@ -81,7 +81,7 @@ def match_onset(folder_path: 'path to the folder that needs matching',
             copyfile(f'{folder_path}/{target}', f'{matching_path}/{target}')
 
 def read_wav_files(folder_path: 'path to folder containing the wav files')-> 'dict with word as key and wav object as item':
-    sound_files = [f'{folder_path}/{x}' for x in listdir(folder_path)]
+    sound_files = [f'{folder_path}/{x}' for x in listdir(folder_path) if 'wav' in x]
     wav_dict = {file.split('.')[-2].split('/')[-1]: wav.read(file) for file in sound_files}
     return wav_dict
 
@@ -121,6 +121,9 @@ def get_mfcc(folder_path: 'folder containing the tokens for chopping analysis.i.
         df[columns] = scaler.fit_transform(df[columns])
     return df
 
+
+
+# this function is for the normal speech rate condition
 def get_all_speakers_mfcc(speakers: 'list speakers', combined_df_path: 'path to the combined data file',
                           condition: 'str resyllabified or non_resyllabified', nmfcc) -> 'save all speakers df':
     for s in speakers:
@@ -132,6 +135,23 @@ def get_all_speakers_mfcc(speakers: 'list speakers', combined_df_path: 'path to 
         else:
             all_speakers_df = pd.concat([all_speakers_df, current_df])
     all_speakers_df.to_csv(combined_df_path, sep='\t', index=False)
+
+
+
+
+# this function is for the slow speech rate condition
+def get_all_speakers_mfcc_slow(speakers: 'list speakers',
+                               combined_df_path: 'path to the combined data file', nmfcc) -> 'save all speakers df':
+    for s in speakers:
+        current_df = get_mfcc(f'../pilot_2/{s}/slow_sound_files', s, 15, nmfcc)
+        if speakers.index(s) == 0:
+            all_speakers_df = current_df
+        else:
+            all_speakers_df = pd.concat([all_speakers_df, current_df])
+    all_speakers_df.to_csv(combined_df_path, sep='\t', index=False)
+
+
+
 
 
 def subset_pair_condition(folder_path: 'path to folder to save the subsetted data',
@@ -160,18 +180,23 @@ def subset_pair_condition(folder_path: 'path to folder to save the subsetted dat
 def main(speakers: 'list of speakers',
          path_to_combined: 'path to save the combined df',
          condition: 'resyllabified or non_resyllabified',
+         speech_rate_condition: 'slow or normal',
          nmfcc: 'int number of mfcc to extract',
          path_to_subsetted):
-    get_all_speakers_mfcc(speakers, path_to_combined, condition, nmfcc)
-    subset_pair_condition(path_to_subsetted, path_to_combined)
-
+    if speech_rate_condition == 'normal':
+        get_all_speakers_mfcc(speakers, path_to_combined, condition, nmfcc)
+        subset_pair_condition(path_to_subsetted, path_to_combined)
+    else:
+        get_all_speakers_mfcc_slow(speakers, path_to_combined, nmfcc)
+        subset_pair_condition(path_to_subsetted, path_to_combined)
 
 if __name__ == '__main__':
     main(['FE', 'BS', 'RB', 'GJ', 'TB'],
-         '../pilot_2/mfcc_data/all_speakers_resyllabified_condition.txt',
-         'resyllabified',
+         '../pilot_2/mfcc_data/all_speakers_slow_rate.txt',
+         'non_resyllabified',
+         'slow',
          15,
-         '../pilot_2/mfcc_data/resyllabified')
+         '../pilot_2/mfcc_data/slow_rate')
 
 
 
