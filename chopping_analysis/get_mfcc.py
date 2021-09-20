@@ -80,10 +80,12 @@ def match_onset(folder_path: 'path to the folder that needs matching',
             # copy the resyllabified sound file to the new folder
             copyfile(f'{folder_path}/{target}', f'{matching_path}/{target}')
 
+
 def read_wav_files(folder_path: 'path to folder containing the wav files')-> 'dict with word as key and wav object as item':
     sound_files = [f'{folder_path}/{x}' for x in listdir(folder_path) if 'wav' in x]
     wav_dict = {file.split('.')[-2].split('/')[-1]: wav.read(file) for file in sound_files}
     return wav_dict
+
 
 def get_mfcc(folder_path: 'folder containing the tokens for chopping analysis.i.e. ../pilot_2/BS/resyllabified_condition',
              speaker: 'str which speaker i.e. BS',

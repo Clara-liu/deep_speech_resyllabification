@@ -7,7 +7,7 @@ import os
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 from tensorflow.keras import optimizers
 from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Dense, LSTM, Bidirectional
+from tensorflow.keras.layers import Dense, LSTM, Bidirectional, Flatten
 from tensorflow.keras.backend import clear_session
 from tensorflow.python.framework.ops import disable_eager_execution
 disable_eager_execution()
@@ -79,8 +79,9 @@ def get_acc(net_config: 'tuple hyperparameters', data: 'dict train/test sets') -
     net = Sequential()
     net.add(Bidirectional(LSTM(nnodes_h1, return_sequences=True, dropout=dropout_h1),
                             merge_mode=merge, input_shape=(nframe, nfeature)))
-    net.add(Bidirectional(LSTM(nnodes_h2, return_sequences=False, dropout=dropout_h2),
+    net.add(Bidirectional(LSTM(nnodes_h2, return_sequences=True, dropout=dropout_h2),
                             merge_mode=merge))
+    net.add(Flatten())
     net.add(Dense(1, activation='sigmoid'))
     # chose optimiser
     if opt == 'adam':
