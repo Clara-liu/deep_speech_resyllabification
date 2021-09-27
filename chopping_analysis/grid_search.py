@@ -8,9 +8,9 @@ from main_analysis import chop_n_get_acc, prep_data
 
 
 def getConfig():
-    nnodes_h1 = [40, 60, 80]
+    nnodes_h1 = [50, 70]
     dropout_h1 = [0.1, 0.3]
-    nnodes_h2 = [50, 70]
+    nnodes_h2 = [40, 60]
     dropout_h2 = [0.1, 0.3]
     merge = ['sum', 'ave']
     nbatch = [64]
