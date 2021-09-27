@@ -131,7 +131,7 @@ def get_all_speakers_mfcc(speakers: 'list speakers', combined_df_path: 'path to 
     for s in speakers:
         match_onset(f'../pilot_2/{s}/normal_sound_files/{condition}', f'../pilot_2/{s}/{condition}_condition',
                     f'../pilot_2/{s}/normal_sound_files')
-        current_df = get_mfcc(f'../pilot_2/{s}/{condition}_condition', s, 15, nmfcc)
+        current_df = get_mfcc(f'../pilot_2/{s}/{condition}_condition', s, nmfcc)
         if speakers.index(s) == 0:
             all_speakers_df = current_df
         else:
@@ -145,7 +145,7 @@ def get_all_speakers_mfcc(speakers: 'list speakers', combined_df_path: 'path to 
 def get_all_speakers_mfcc_slow(speakers: 'list speakers',
                                combined_df_path: 'path to the combined data file', nmfcc) -> 'save all speakers df':
     for s in speakers:
-        current_df = get_mfcc(f'../pilot_2/{s}/slow_sound_files', s, 15, nmfcc)
+        current_df = get_mfcc(f'../pilot_2/{s}/slow_sound_files', s, nmfcc)
         if speakers.index(s) == 0:
             all_speakers_df = current_df
         else:

@@ -17,7 +17,6 @@ def getConfig():
     optimiser = ['adam', 'rmsprop']
     nepochs = [45, 65]
     lr = [0.0005, 0.001]
-    l2_lambda = [0.0]
     configs = {}
     config_no = 0
     for i in nnodes_h1:
@@ -35,24 +34,25 @@ def getConfig():
     return configs
 
 def grid_search(pair_name: 'str the pair to use for searching',
-                condition: 'str slow_rate resyllabified or non_resyllabified'):
+                condition: 'str slow_rate resyllabified or non_resyllabified',
+                data_type: 'str mfcc_data or mel_data'):
     # path for the dataframe
-    pair_path = f'../pilot_2/mfcc_data/{condition}/byPair/{pair_name}.txt'
+    pair_path = f'../pilot_2/{data_type}/{condition}/byPair/{pair_name}.txt'
     # read it
     df = pd.read_csv(pair_path, sep='\t')
-    # prep for classifier training
-    data = prep_data(df, 0.005, 0.8)
     config_dict = getConfig()
     with open('configs.json', 'w') as file:
         json.dump(config_dict, file)
     for config_no, config in config_dict.items():
+        # prep for classifier training
+        data = prep_data(df, 0.005, 0.8)
         current_result = chop_n_get_acc(pair_name, config_no, data, config)
-        if config_no == 0:
+        if config_no == '0':
             result = current_result
         else:
             result = pd.concat([result, current_result])
-    result.to_csv(f'grid_search_result_{pair_name}.txt', sep='\t', index=False)
+    result.to_csv(f'grid_search_result_{pair_name}_{data_type}.txt', sep='\t', index=False)
 
 
 if __name__ == '__main__':
-    grid_search('P1_Onset', 'slow_rate')
+    grid_search('P1_Onset', 'slow_rate', 'mel_data')

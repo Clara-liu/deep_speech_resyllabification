@@ -15,9 +15,12 @@ disable_eager_execution()
 
 
 def prep_data(df: 'pandas mfcc df', interval: 'sampling hop of mfcc df',
-              train_ratio, get_diff: 'get velocity' = True) -> 'train/test sets':
-    # scaler for scaling velocity to same scale as mfccs
-    scaler = MinMaxScaler((-50, 50))
+              train_ratio, data_type='mel_data', get_diff: 'get velocity' = True) -> 'train/test sets':
+    # scaler for scaling velocity to same scale as mfcc or mel data
+    if data_type == 'mel_data':
+        scaler = MinMaxScaler((-5, 20))
+    else:
+        scaler = MinMaxScaler((-50, 50))
     # calculate velocity
     if get_diff:
         diff_df = df.select_dtypes('float').diff(periods=1, axis=0)
@@ -132,9 +135,10 @@ def chop_n_get_acc(pair: 'str pair label', condition: 'str onset or coda',
 
 def analyse(syllabification_condition: 'resyllabified or non_resyllabified or slow',
             ntrial: 'number of times to repeat the chopping analysis',
-            config: 'NN hyperparameter config') -> 'pd datafram of chopping analysis':
+            config: 'NN hyperparameter config',
+            data_type: 'str mfcc_data or mel_data') -> 'pd datafram of chopping analysis':
     # path to folder containiing the minimal pair dfs
-    df_folder_path = f'../pilot_2/mfcc_data/{syllabification_condition}/byPair'
+    df_folder_path = f'../pilot_2/{data_type}/{syllabification_condition}/byPair'
     # read the file names
     files = listdir(df_folder_path)
     # loop through all the files
@@ -150,7 +154,7 @@ def analyse(syllabification_condition: 'resyllabified or non_resyllabified or sl
         # loop through all trials
         for i in range(ntrial):
             # get test/train data and randomise
-            data = prep_data(df, 0.005, 0.8)
+            data = prep_data(df, 0.005, 0.8, data_type=data_type)
             # get result
             current_result = chop_n_get_acc(pair, condition, data, config)
             # record repetition/trial number
@@ -160,9 +164,9 @@ def analyse(syllabification_condition: 'resyllabified or non_resyllabified or sl
                 result = current_result
             else:
                 result = pd.concat([result, current_result])
-    result.to_csv(f'chopping_result_{syllabification_condition}.txt', sep='\t', index=False)
+    result.to_csv(f'chopping_result_{syllabification_condition}_{data_type}.txt', sep='\t', index=False)
 
 
 if __name__ == '__main__':
-    analyse('resyllabified', 10, (15, 0.2, 20, 0.3, 'sum', 32, 'adam', 45, 0.001))
+    analyse('slow_rate', 10, (40, 0.1, 35, 0.2, 'sum', 64, 'adam', 50, 0.001), 'mel_data')
 
