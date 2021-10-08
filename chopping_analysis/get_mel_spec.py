@@ -58,7 +58,7 @@ def main(speakers: 'str which speakers',
         subset_pair_condition(path_to_subsetted, path_to_combined)
 
 if __name__ == '__main__':
-    main(['FE', 'BS', 'RB', 'GJ', 'TB'],
+    main(['FE', 'BS', 'RB', 'GJ', 'TB', 'MAG'],
          '../pilot_2/mel_data/all_speakers_slow_rate.txt',
          'non_resyllabified',
          'slow',

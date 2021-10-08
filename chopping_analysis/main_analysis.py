@@ -154,7 +154,7 @@ def analyse(syllabification_condition: 'resyllabified or non_resyllabified or sl
         # loop through all trials
         for i in range(ntrial):
             # get test/train data and randomise
-            data = prep_data(df, 0.005, 0.8, data_type=data_type)
+            data = prep_data(df, 0.005, 0.7, data_type=data_type)
             # get result
             current_result = chop_n_get_acc(pair, condition, data, config)
             # record repetition/trial number
@@ -168,5 +168,5 @@ def analyse(syllabification_condition: 'resyllabified or non_resyllabified or sl
 
 
 if __name__ == '__main__':
-    analyse('slow_rate', 10, (40, 0.1, 35, 0.2, 'sum', 64, 'adam', 50, 0.001), 'mel_data')
+    analyse('slow_rate', 10, (45, 0.2, 40, 0.1, 'sum', 64, 'adam', 80, 0.001), 'mel_data')
 
