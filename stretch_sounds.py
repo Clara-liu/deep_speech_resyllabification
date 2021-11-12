@@ -105,4 +105,4 @@ def main(sounds_path, aug_ratio, speaker_name):
         do_command('RemoveTracks:')
 if __name__ == '__main__':
     quick_test()
-    main('pilot_2/MAG/slow_sound_files', 0.5, 'pilot_2/MAG')
+    main('pilot_2/SG/slow_sound_files', 0.5, 'pilot_2/SG')

@@ -9,8 +9,8 @@ from tensorflow.keras import optimizers
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense, LSTM, Bidirectional, Flatten
 from tensorflow.keras.backend import clear_session
-from tensorflow.python.framework.ops import disable_eager_execution
-disable_eager_execution()
+#from tensorflow.python.framework.ops import disable_eager_execution
+#disable_eager_execution()
 
 
 
@@ -75,16 +75,18 @@ def chop(features: 'np matrix of features (ntoken, n, 30)') ->'features with n-1
 def get_acc(net_config: 'tuple hyperparameters', data: 'dict train/test sets') -> 'float loss and acc on the test set':
     x_train, y_train = data['train']
     x_test, y_test = data['test']
-    nnodes_h1, dropout_h1, nnodes_h2, dropout_h2, merge, nbatch, opt, nepoch, lr = net_config
+    nnodes_h1, dropout_h1, nnodes_h2, dropout_h2, nnodes_dense, merge, nbatch, opt, nepoch, lr = net_config
     nframe = x_train.shape[1]
     nfeature = x_train.shape[2]
 
     net = Sequential()
     net.add(Bidirectional(LSTM(nnodes_h1, return_sequences=True, dropout=dropout_h1),
                             merge_mode=merge, input_shape=(nframe, nfeature)))
-    net.add(Bidirectional(LSTM(nnodes_h2, return_sequences=True, dropout=dropout_h2),
+    net.add(Bidirectional(LSTM(nnodes_h2, return_sequences=False, dropout=dropout_h2),
                             merge_mode=merge))
     net.add(Flatten())
+    net.add(Dense(nnodes_dense, activation='relu'))
+    net.add(Dense(100, activation='relu'))
     net.add(Dense(1, activation='sigmoid'))
     # chose optimiser
     if opt == 'adam':
@@ -164,9 +166,10 @@ def analyse(syllabification_condition: 'resyllabified or non_resyllabified or sl
                 result = current_result
             else:
                 result = pd.concat([result, current_result])
+            print(f'file no. {files.index(f)} trial no. {i}')
     result.to_csv(f'chopping_result_{syllabification_condition}_{data_type}.txt', sep='\t', index=False)
 
 
 if __name__ == '__main__':
-    analyse('slow_rate', 10, (45, 0.2, 40, 0.1, 'sum', 64, 'adam', 80, 0.001), 'mel_data')
+    analyse('slow_rate', 5, (40, 0.2, 35, 0.1, 30, 'sum', 64, 'adam', 70, 0.001), 'mel_data')
 

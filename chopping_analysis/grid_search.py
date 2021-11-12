@@ -11,26 +11,28 @@ def getConfig():
     nnodes_h1 = [50, 70]
     dropout_h1 = [0.1, 0.3]
     nnodes_h2 = [40, 60]
-    dropout_h2 = [0.1, 0.3]
-    merge = ['sum', 'ave']
+    dropout_h2 = [0.1]
+    nnodes_dense = [500, 800]
+    merge = ['ave']
     nbatch = [64]
     optimiser = ['adam', 'rmsprop']
-    nepochs = [45, 65]
-    lr = [0.0005, 0.001]
+    nepochs = [60, 80]
+    lr = [0.001, 0.005]
     configs = {}
     config_no = 0
     for i in nnodes_h1:
         for j in dropout_h1:
             for k in nnodes_h2:
                 for l in dropout_h2:
-                    for m in merge:
-                        for n in nbatch:
-                            for o in optimiser:
-                                for p in nepochs:
-                                    for q in lr:
-                                            config = (i, j, k, l, m, n, o, p, q)
-                                            configs[f'{config_no}'] = config
-                                            config_no += 1
+                    for m in nnodes_dense:
+                        for n in merge:
+                            for o in nbatch:
+                                for p in optimiser:
+                                    for q in nepochs:
+                                        for r in lr:
+                                                config = (i, j, k, l, m, n, o, p, q, r)
+                                                configs[f'{config_no}'] = config
+                                                config_no += 1
     return configs
 
 def grid_search(pair_name: 'str the pair to use for searching',
@@ -45,13 +47,18 @@ def grid_search(pair_name: 'str the pair to use for searching',
         json.dump(config_dict, file)
     for config_no, config in config_dict.items():
         # prep for classifier training
-        data = prep_data(df, 0.005, 0.8)
-        current_result = chop_n_get_acc(pair_name, config_no, data, config)
-        if config_no == '0':
-            result = current_result
-        else:
-            result = pd.concat([result, current_result])
-    result.to_csv(f'grid_search_result_{pair_name}_{data_type}.txt', sep='\t', index=False)
+        for rep in range(3):
+            data = prep_data(df, 0.005, 0.7)
+            current_result = chop_n_get_acc(pair_name, config_no, data, config)
+            current_result['Rep'] = rep
+            if config_no == '0' and rep == 0:
+                result = current_result
+                result.to_csv(f'grid_search_result_{pair_name}_{data_type}.txt', sep='\t', index=False)
+            else:
+                saved_result = pd.read_csv(f'grid_search_result_{pair_name}_{data_type}.txt', sep='\t')
+                result = pd.concat([saved_result, current_result])
+                result.to_csv(f'grid_search_result_{pair_name}_{data_type}.txt', sep='\t', index=False)
+            print(f'config no.{config_no}, rep no. {rep} finished')
 
 
 if __name__ == '__main__':
