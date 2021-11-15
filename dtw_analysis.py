@@ -60,4 +60,53 @@ def calc_dtw_dist(sound_file_instance: 'instance of the sound_files class',
             wp_dist_list = [D[x, y] for x, y in wp]
             total_dist = sum(wp_dist_list)
             dist_matrix[token_list.index(token_row), token_list.index(token_col)] = total_dist
-    return dist_matrix
+    return token_list, dist_matrix
+
+
+def take_rep_mean(dist_matrix,
+                  label_list,
+                  reduce_v_contrast = True)-> 'dist matrix averaged between repetition,' \
+                                              'if reduce_v_contrast, dist martix further averaged between vowel pairs':
+    # reduce repetitions and retain insertion order e.g. ['a', 'a', 'b'] -> ['a', 'b']
+    label_list_reduced = list(dict.fromkeys([f'{x[0]}_{x[1]}_{"_".join(x[3:])}' for x in [x_.split('_') for x_ in label_list]]))
+    # indices of repeated labels
+    rep_indices = []
+    for l in label_list_reduced:
+        indices = []
+        for l_ in label_list:
+            # see if the words in the reduced one is a subset of the non reduced ones
+            if set(l.split('_')) <= set(l_.split('_')):
+                indices.append(label_list.index(l_))
+        rep_indices.append(indices)
+    rep_indices = [(x[0], x[-1]) for x in rep_indices]
+    # to record mean values
+    mean_matrix = np.zeros((len(label_list_reduced), len(label_list_reduced)))
+    # loop through rep indices to subset dist_matrix and calculate mean
+    for row in range(len(rep_indices)):
+        for col  in range(len(rep_indices)):
+            row_start, row_end = rep_indices[row]
+            col_start, col_end = rep_indices[col]
+            mean = dist_matrix[row_start:row_end + 1, col_start:col_end + 1].mean()
+            mean_matrix[row, col] = mean
+    if reduce_v_contrast:
+        code_dict = {'Lee': 'P0_onset', 'least': 'P0_coda', 'Kerr': 'P1_onset', 'cusp': 'P1_coda',
+                     'do': 'P2_onset', 'doom': 'P2_coda', 'coo': 'P3_onset', 'coop': 'P3_coda'}
+        label_list_reduced_further = list(dict.fromkeys([f'{code_dict[x[0]]}_{"_".join(x[2:])}' for x in [x_.split('_') for x_ in label_list_reduced]]))
+        indices_reduced_further = []
+        for l in label_list_reduced_further:
+            indices = []
+            for l_ in label_list_reduced:
+                if l == code_dict[l_.split('_')[0]] + '_' + '_'.join(l_.split('_')[2:]):
+                    indices.append(label_list_reduced.index(l_))
+            indices_reduced_further.append(indices)
+        indices_reduced_further = [(x[0], x[-1]) for x in indices_reduced_further]
+        further_mean_matrix = np.zeros((len(label_list_reduced_further), len(label_list_reduced_further)))
+        for row in range(len(indices_reduced_further)):
+            for col  in range(len(indices_reduced_further)):
+                row_start, row_end = indices_reduced_further[row]
+                col_start, col_end = indices_reduced_further[col]
+                mean = mean_matrix[row_start:row_end + 1, col_start:col_end + 1].mean()
+                further_mean_matrix[row, col] = mean
+        return label_list_reduced_further, np.round(further_mean_matrix, 2)
+    else:
+        return label_list_reduced, np.round(mean_matrix, 2)
