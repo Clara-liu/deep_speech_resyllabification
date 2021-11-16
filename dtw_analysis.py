@@ -110,3 +110,31 @@ def take_rep_mean(dist_matrix,
         return label_list_reduced_further, np.round(further_mean_matrix, 2)
     else:
         return label_list_reduced, np.round(mean_matrix, 2)
+
+
+def main(speaker: 'str speaker abbreviation',
+         reduction_level: 'str none, rep or all')-> 'none output png to speaker folder':
+    speaker_folder_path = f'pilot_2/{speaker}'
+    path_dict = {'slow': f'pilot_2/{speaker}/slow_sound_files',
+                 'non_resyllabified': f'pilot_2/{speaker}/normal_sound_files/non_resyllabified',
+                 'resyllabified': f'pilot_2/{speaker}/normal_sound_files/resyllabified'}
+    sound_obj = sound_files(speaker, path_dict)
+    sound_obj.get_wavs()
+    sound_obj.get_mels(0.01, 0.03, 26)
+    raw_labels, raw_dist_matrix = calc_dtw_dist(sound_obj, 'cosine')
+    if reduction_level == 'none':
+        data = pd.DataFrame(raw_dist_matrix, columns=raw_labels, index=raw_labels)
+        plot = sn.heatmap(data, cmap="YlGnBu", annot=False, cbar=True)
+        fig = plot.get_figure()
+        fig.savefig(f'{speaker_folder_path}/{speaker}_dtw_dist.png', dpi = 700)
+    else:
+        if reduction_level == 'rep':
+            reduced_labels, reduced_matrix = take_rep_mean(raw_dist_matrix, raw_labels, reduce_v_contrast=False)
+        else:
+            reduced_labels, reduced_matrix = take_rep_mean(raw_dist_matrix, raw_labels)
+        data = pd.DataFrame(reduced_matrix, columns=reduced_labels, index=reduced_labels)
+        plt.figure(figsize=(16, 13))
+        sn.set(font_scale=.9)
+        plot = sn.heatmap(data, cmap="YlGnBu", linewidths=.5, annot=False, cbar=True, xticklabels=1, yticklabels=1)
+        fig = plot.get_figure()
+        fig.savefig(f'{speaker_folder_path}/{speaker}_dtw_dist.png', dpi = 700)
