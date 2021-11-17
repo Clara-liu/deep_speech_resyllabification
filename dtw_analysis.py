@@ -4,6 +4,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sn
+from stimuli import code_dict, stimuli_pilot
 
 
 
@@ -48,14 +49,20 @@ def calc_dtw_dist(sound_file_instance: 'instance of the sound_files class',
     # initialise distance matrix
     dist_matrix = np.zeros((n_tokens, n_tokens))
     # calculate sako-chiba band radius for restricting warping path
-    rad = (sound_file_instance.duration_dict['slow'] - sound_file_instance.duration_dict['resyllabified'])/\
-          sound_file_instance.duration_dict['resyllabified']*0.5
+    # rad = (sound_file_instance.duration_dict['slow'] - sound_file_instance.duration_dict['resyllabified'])/\
+    #       sound_file_instance.duration_dict['resyllabified']*0.5
     for token_row in token_list:
         for token_col in token_list:
+            # row_sig_len = sound_file_instance.mel_dict[token_row].shape[1]
+            # col_sig_len = sound_file_instance.mel_dict[token_col].shape[1]
+            # # calculate sako-chiba band radius for restricting warping path
+            # rad = (abs(row_sig_len - col_sig_len)/min([row_sig_len, col_sig_len]))*0.5
+            # if rad < 0.1:
+            #     rad = 0.1
             D, wp = librosa.sequence.dtw(sound_file_instance.mel_dict[token_row],
                                          sound_file_instance.mel_dict[token_col],
                                          global_constraints=True,
-                                         band_rad=rad,
+                                         #band_rad=rad,
                                          metric=dist_func)
             wp_dist_list = [D[x, y] for x, y in wp]
             total_dist = sum(wp_dist_list)
@@ -89,8 +96,6 @@ def take_rep_mean(dist_matrix,
             mean = dist_matrix[row_start:row_end + 1, col_start:col_end + 1].mean()
             mean_matrix[row, col] = mean
     if reduce_v_contrast:
-        code_dict = {'Lee': 'P0_onset', 'least': 'P0_coda', 'Kerr': 'P1_onset', 'cusp': 'P1_coda',
-                     'do': 'P2_onset', 'doom': 'P2_coda', 'coo': 'P3_onset', 'coop': 'P3_coda'}
         label_list_reduced_further = list(dict.fromkeys([f'{code_dict[x[0]]}_{"_".join(x[2:])}' for x in [x_.split('_') for x_ in label_list_reduced]]))
         indices_reduced_further = []
         for l in label_list_reduced_further:
@@ -112,7 +117,7 @@ def take_rep_mean(dist_matrix,
         return label_list_reduced, np.round(mean_matrix, 2)
 
 
-def main(speaker: 'str speaker abbreviation',
+def get_heatmap(speaker: 'str speaker abbreviation',
          reduction_level: 'str none, rep or all')-> 'none output png to speaker folder':
     speaker_folder_path = f'pilot_2/{speaker}'
     path_dict = {'slow': f'pilot_2/{speaker}/slow_sound_files',
@@ -138,3 +143,54 @@ def main(speaker: 'str speaker abbreviation',
         plot = sn.heatmap(data, cmap="YlGnBu", linewidths=.5, annot=False, cbar=True, xticklabels=1, yticklabels=1)
         fig = plot.get_figure()
         fig.savefig(f'{speaker_folder_path}/{speaker}_dtw_dist.png', dpi = 700)
+
+def get_dist_data(speaker: 'str speaker abbreviation',
+                  reference_condition: 'str resyllabified vs slow or non_resyllabified vs slow'):
+    speaker_folder_path = f'pilot_2/{speaker}'
+    path_dict = {'slow': f'pilot_2/{speaker}/slow_sound_files',
+             'non_resyllabified': f'pilot_2/{speaker}/normal_sound_files/non_resyllabified',
+             'resyllabified': f'pilot_2/{speaker}/normal_sound_files/resyllabified'}
+    sound_obj = sound_files(speaker, path_dict)
+    sound_obj.get_wavs()
+    sound_obj.get_mels(0.01, 0.03, 26)
+    raw_labels, raw_dist_matrix = calc_dtw_dist(sound_obj, 'cosine')
+    # initialise empty list for data. col order - Distance, Pair, Comparison
+    data = []
+    # using row as the reference sound
+    for row in range(len(raw_labels)):
+        for col in range(len(raw_labels)):
+            row_label_list = raw_labels[row].split('_')
+            col_label_list = raw_labels[col].split('_')
+            # if the label is resyllabified or non_resyllabified depending on the condition specified
+            if '_'.join(row_label_list[3:]) == reference_condition:
+                # if the reference and query sounds are from the same word pair
+                if (code_dict[row_label_list[0]].split('_')[0]) == (code_dict[col_label_list[0]].split('_')[0]):
+                    # if the vowel target matches between the two
+                    row_stimuli_idx = stimuli_pilot.index(' '.join(row_label_list[:2]))
+                    col_stimuli_idx = stimuli_pilot.index(' '.join(col_label_list[:2]))
+                    if row_stimuli_idx - col_stimuli_idx == 2 or row_stimuli_idx == col_stimuli_idx:
+                        distance = raw_dist_matrix[row, col]
+                        pair_code = code_dict[row_label_list[0]].split('_')[0]
+                        comparison = f'{reference_condition}_coda_VS_slow_{code_dict[col_label_list[0]].split("_")[-1]}'
+                        data.append([distance, pair_code, comparison, speaker])
+    result = pd.DataFrame(data, columns=['Distance', 'Pair', 'Comparison', 'Speaker'])
+    return result
+
+
+def main(reference_condition, speaker_list):
+    for s in speaker_list:
+        current_data = get_dist_data(s, reference_condition)
+        if speaker_list.index(s) == 0:
+            data = current_data
+        else:
+            data = pd.concat([data, current_data])
+    data.to_csv(f'pilot_2/dtw_analysis_{reference_condition}_comparison.txt', sep='\t', index=False)
+
+if __name__ == '__main__':
+    main('resyllabified', ['BS', 'AR', 'FE', 'GJ', 'MAG', 'RB', 'SG', 'TB'])
+
+
+
+
+
+
