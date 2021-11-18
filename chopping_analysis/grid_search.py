@@ -8,16 +8,16 @@ from main_analysis import chop_n_get_acc, prep_data
 
 
 def getConfig():
-    nnodes_h1 = [50, 70]
-    dropout_h1 = [0.1, 0.3]
+    nnodes_h1 = [70, 90]
+    dropout_h1 = [0.1, 0.2]
     nnodes_h2 = [40, 60]
     dropout_h2 = [0.1]
-    nnodes_dense = [500, 800]
+    nnodes_dense = [500]
     merge = ['ave']
-    nbatch = [64]
-    optimiser = ['adam', 'rmsprop']
+    nbatch = [64, 128]
+    optimiser = ['rmsprop']
     nepochs = [60, 80]
-    lr = [0.001, 0.005]
+    lr = [0.001, 0.003]
     configs = {}
     config_no = 0
     for i in nnodes_h1:

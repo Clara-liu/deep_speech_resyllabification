@@ -53,16 +53,16 @@ def calc_dtw_dist(sound_file_instance: 'instance of the sound_files class',
     #       sound_file_instance.duration_dict['resyllabified']*0.5
     for token_row in token_list:
         for token_col in token_list:
-            # row_sig_len = sound_file_instance.mel_dict[token_row].shape[1]
-            # col_sig_len = sound_file_instance.mel_dict[token_col].shape[1]
-            # # calculate sako-chiba band radius for restricting warping path
-            # rad = (abs(row_sig_len - col_sig_len)/min([row_sig_len, col_sig_len]))*0.5
-            # if rad < 0.1:
-            #     rad = 0.1
+            row_sig_len = sound_file_instance.mel_dict[token_row].shape[1]
+            col_sig_len = sound_file_instance.mel_dict[token_col].shape[1]
+            # calculate sako-chiba band radius for restricting warping path
+            rad = (abs(row_sig_len - col_sig_len)/min([row_sig_len, col_sig_len]))*0.5
+            if rad < 0.1:
+                rad = 0.1
             D, wp = librosa.sequence.dtw(sound_file_instance.mel_dict[token_row],
                                          sound_file_instance.mel_dict[token_col],
                                          global_constraints=True,
-                                         #band_rad=rad,
+                                         band_rad=rad,
                                          metric=dist_func)
             wp_dist_list = [D[x, y] for x, y in wp]
             total_dist = sum(wp_dist_list)
@@ -161,8 +161,9 @@ def get_dist_data(speaker: 'str speaker abbreviation',
         for col in range(len(raw_labels)):
             row_label_list = raw_labels[row].split('_')
             col_label_list = raw_labels[col].split('_')
-            # if the label is resyllabified or non_resyllabified depending on the condition specified
-            if '_'.join(row_label_list[3:]) == reference_condition:
+            # if the row label is the condition specified (i.e. resyllabified or non_resyllabified)
+            # and if the col label is the slow condition
+            if '_'.join(row_label_list[3:]) == reference_condition and '_'.join(col_label_list[3:]) == 'slow':
                 # if the reference and query sounds are from the same word pair
                 if (code_dict[row_label_list[0]].split('_')[0]) == (code_dict[col_label_list[0]].split('_')[0]):
                     # if the vowel target matches between the two
@@ -187,7 +188,7 @@ def main(reference_condition, speaker_list):
     data.to_csv(f'pilot_2/dtw_analysis_{reference_condition}_comparison.txt', sep='\t', index=False)
 
 if __name__ == '__main__':
-    main('resyllabified', ['BS', 'AR', 'FE', 'GJ', 'MAG', 'RB', 'SG', 'TB'])
+    main('non_resyllabified', ['BS', 'AR', 'FE', 'GJ', 'MAG', 'RB', 'SG', 'TB'])
 
 
 

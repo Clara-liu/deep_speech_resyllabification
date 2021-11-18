@@ -1,4 +1,4 @@
-from get_mfcc import Stimuli, match_onset, read_wav_files, subset_pair_condition, match_onset
+from get_mfcc import Stimuli, match_onset, read_wav_files, subset_pair_condition
 from python_speech_features.base import logfbank
 import pandas as pd
 
@@ -58,7 +58,7 @@ def main(speakers: 'str which speakers',
         subset_pair_condition(path_to_subsetted, path_to_combined)
 
 if __name__ == '__main__':
-    main(['FE', 'BS', 'RB', 'GJ', 'TB', 'MAG'],
+    main(['FE', 'BS', 'RB', 'GJ', 'TB', 'MAG', 'SG', 'AR'],
          '../pilot_2/mel_data/all_speakers_slow_rate.txt',
          'non_resyllabified',
          'slow',
