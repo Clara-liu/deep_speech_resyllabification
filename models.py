@@ -112,7 +112,7 @@ class VanillaModel(nn.Module):
         self.res_cnn = nn.Sequential(*[ResNet(convo_channel, convo_channel, kernel=(5, 5), stride=1, drop_out=dropout, n_mels=n_feats)
                                        for _ in range(n_res_layers)])
         self.dense = nn.Linear(n_feats*convo_channel, gru_dim)
-        self.bi_gru = self.bi_gru = nn.Sequential(*[BiGRU(gru_dim=gru_dim if i ==0 else gru_dim*2, hidden_size=gru_dim,
+        self.bi_gru = self.bi_gru = nn.Sequential(*[BiGRU(gru_dim=gru_dim if i==0 else gru_dim*2, hidden_size=gru_dim,
                                                           dropout=dropout, batch_first=True) for i in range(n_gru_layers)])
         self.classifier = nn.Sequential(
             nn.Linear(gru_dim*2, linear_dim),

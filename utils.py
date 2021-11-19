@@ -71,7 +71,10 @@ def decode(label_list: 'list of labels') -> 'list of words':
         decoded.append(words)
     return decoded
 
-def confusion_collapsed(ypred: 'prediction matrix made by model', ytrue: 'list target labels'):
+def confusion_collapsed(ypred: 'prediction matrix made by model',
+                        ytrue: 'list target labels',
+                        speaker_folder: 'path to save the confusion matrix',
+                        matrix_label: 'str validation or norm'):
     converter = LabelConvert()
     nlabels = len(converter.seq_dict)
     labels = [converter.seq_dict[x] for x in range(nlabels)]
@@ -81,6 +84,8 @@ def confusion_collapsed(ypred: 'prediction matrix made by model', ytrue: 'list t
     for i in range(len(targets)):
         confuse[targets[i], predictions[i]] += 1
     confuse = pd.DataFrame(confuse, columns=labels, index=labels)
+    # save validation confusion matrix
+    confuse.to_csv(f'{speaker_folder}/{matrix_label}_matrix.txt', sep='\t', index=True)
     confuse.index.name = 'Actual'
     confuse.columns.name = 'Predicted'
     plt.figure(figsize=(12, 10))
@@ -102,7 +107,7 @@ def transfer_param(net_new: 'new model', path_trained: 'path to pretrained dict'
     return net_new
 
 
-def early_stopping(eval_metric_log, stop_threshold=0.985):
+def early_stopping(eval_metric_log, stop_threshold=0.98):
     if len(eval_metric_log) < 6:
         stop = False
     else:
@@ -113,8 +118,7 @@ def early_stopping(eval_metric_log, stop_threshold=0.985):
             stop = False
     return stop
 
-def count_resyllabified(speakers: 'list', resyllabification_condition: 'resyllabified or not',
-                        folder = 'pilot_2', plot = True, return_data=False):
+def count_resyllabified(speakers: 'list', folder = 'pilot_2', plot = True, return_data=False):
     # create data frame for counting
     coda_words = ['least_eel', 'least_ale', 'cusp_eel', 'cusp_ale', 'doom_art', 'doom_eat', 'coop_art', 'coop_eat']
     data = {'Speaker': [], 'Word': [], 'Pair': [], 'Count': [0 for i in range(8*len(speakers))]}
@@ -126,7 +130,7 @@ def count_resyllabified(speakers: 'list', resyllabification_condition: 'resyllab
     # loop through each speaker's files and count
     for ss in speakers:
         # get files for each speaker
-        path = f'{folder}/{ss}/normal_sound_files/{resyllabification_condition}'
+        path = f'{folder}/{ss}/normal_sound_files/resyllabified'
         files = listdir(path)
         # count
         for f in files:

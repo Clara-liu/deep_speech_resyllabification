@@ -20,11 +20,11 @@ params_args = {
     'n_convos': 32,
     'lr': 0.0001,
     'batch_size': 32,
-    'n_epochs': 85,
-    'data_path': 'pilot_2/KZ',
+    'n_epochs': 120,
+    'data_path': 'pilot_2/SG',
 }
 # to monitor training
-writer = tensorboard.SummaryWriter('runs/vanilla_classification_pilot_2_KZ')
+writer = tensorboard.SummaryWriter('runs/vanilla_classification_pilot_2_SG')
 # initiate model
 net = VanillaModel(params_args['n_res_cnn'], params_args['n_rnn'], params_args['rnn_dim'], params_args['n_class'],
                    params_args['n_feats'], params_args['linear_dim'], stride=1, dropout=params_args['dropout'],
@@ -89,7 +89,7 @@ def plotSortNorm():
     mel_specs, labels, reps = processNormal(data)
     pred = net(mel_specs)
     # plot and save confusion plot
-    confusion_collapsed(pred, labels)
+    confusion_collapsed(pred, labels, params_args['data_path'], 'norm')
     plt.savefig(f'{params_args["data_path"]}/{params_args["data_path"].split("/")[-1]}_norm.jpg')
     plt.close()
     # sort sound files
@@ -100,6 +100,7 @@ def plotSortNorm():
     os.mkdir(resyllabified_dir)
     os.mkdir(non_resyllabified_dir)
     coda_condition = [2, 3, 6, 7, 10, 11, 14, 15]
+    # sorting normal speaking rate tokens into resyllabified or non_resyllabified folders
     for i in range(len(predictions)):
         p = predictions[i]
         t = targets[i]
@@ -135,7 +136,7 @@ def main():
     # plot and save confusion heatmap for validation set
     mel_specs, labels, _, _ = dataProcess(val_data, train=False)
     pred = net(mel_specs)
-    confusion_collapsed(pred, labels)
+    confusion_collapsed(pred, labels, params_args['data_path'], 'validation')
     plt.savefig(f'{params_args["data_path"]}/{params_args["data_path"].split("/")[-1]}_val.jpg')
     plt.close()
 
