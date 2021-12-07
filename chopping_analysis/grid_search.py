@@ -6,6 +6,7 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
 from main_analysis import chop_n_get_acc, prep_data
 
+# results best: config no. 68: [70, 0.05, 60, 0.1, 500, 'ave', 128, 'adam', 80, 0.001]
 
 def getConfig():
     nnodes_h1 = [70, 90]

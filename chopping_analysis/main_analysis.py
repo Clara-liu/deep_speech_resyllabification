@@ -84,7 +84,7 @@ def get_acc(net_config: 'tuple hyperparameters', data: 'dict train/test sets') -
                             merge_mode=merge, input_shape=(nframe, nfeature)))
     net.add(Bidirectional(LSTM(nnodes_h2, return_sequences=False, dropout=dropout_h2),
                             merge_mode=merge))
-    net.add(Flatten())
+    #net.add(Flatten())
     net.add(Dense(nnodes_dense, activation='relu'))
     net.add(Dense(100, activation='relu'))
     net.add(Dense(1, activation='sigmoid'))
@@ -171,5 +171,7 @@ def analyse(syllabification_condition: 'resyllabified or non_resyllabified or sl
 
 
 if __name__ == '__main__':
-    analyse('slow_rate', 5, (40, 0.2, 35, 0.1, 30, 'sum', 64, 'adam', 70, 0.001), 'mel_data')
+    # results best: config no. 68: [70, 0.05, 60, 0.1, 500, 'ave', 128, 'adam', 80, 0.001]
+    analyse('slow_rate', 10, (70, 0.05, 60, 0.1, 500, 'ave', 128, 'adam', 80, 0.001), 'mel_data')
+
 
