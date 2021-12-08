@@ -146,3 +146,57 @@ def count_resyllabified(speakers: 'list', folder = 'pilot_2', plot = True, retur
         grid.add_legend()
     if return_data:
         return data
+
+
+def sum_plot_confusion(speakers: 'list'):
+    # initialise zero matrices
+    summed_norm_data = np.zeros((12, 12))
+    summed_validation_data = np.zeros((12, 12))
+    for s in speakers:
+        # path to validation and normal speaking rate matrices
+        norm_path = f'pilot_2/{s}/norm_matrix.txt'
+        validation_path = f'pilot_2/{s}/validation_matrix.txt'
+        # read the data for the metrices
+        norm_data = pd.read_csv(norm_path, sep='\t', index_col=0)
+        validation_data = pd.read_csv(validation_path, sep='\t', index_col=0)
+        # filter out P1 rows
+        unwanted = ['Kerr speel', 'Kerr spale', 'cusp eel', 'cusp ale']
+        norm_data = norm_data.drop(unwanted, axis=0)
+        validation_data = validation_data.drop(unwanted, axis=0)
+        # record word labels
+        if speakers.index(s) == 0:
+            labels = list(norm_data.index)
+        # filter out P1 cols then convert to numpy
+        norm_data = norm_data.drop(unwanted, axis=1).to_numpy()
+        validation_data = validation_data.drop(unwanted, axis=1).to_numpy()
+        # sum matrices
+        summed_norm_data += norm_data
+        summed_validation_data += validation_data
+    # convert to pandas
+    summed_norm_data = pd.DataFrame(summed_norm_data, columns=labels, index=labels)
+    summed_validation_data = pd.DataFrame(summed_validation_data, columns=labels, index=labels)
+    # add col and row titles for the heatmap
+    summed_norm_data.index.name = 'Actual'
+    summed_norm_data.columns.name = 'Predicted'
+    summed_validation_data.index.name = 'Actual'
+    summed_validation_data.columns.name = 'Predicted'
+    # plot and save heatmaps
+    plt.figure(figsize=(12, 10))
+    sn.set(font_scale=1.4)
+    plot = sn.heatmap(summed_norm_data, cmap='Blues', cbar=False, annot=True, annot_kws={'size': 15})
+    plot.set_yticklabels(plot.get_yticklabels(), rotation=30)
+    plot.set_xticklabels(plot.get_xticklabels(), rotation=30)
+    plt.savefig(f'pilot_2/summed_norm.jpg')
+    plt.clf()
+    plot = sn.heatmap(summed_validation_data, cmap='Blues', cbar=False, annot=True, annot_kws={'size': 15})
+    plot.set_yticklabels(plot.get_yticklabels(), rotation=30)
+    plot.set_xticklabels(plot.get_xticklabels(), rotation=30)
+    plt.savefig(f'pilot_2/summed_validation.jpg')
+    plt.close()
+
+
+
+
+
+
+

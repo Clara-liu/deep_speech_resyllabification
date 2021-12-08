@@ -14,7 +14,8 @@ def get_mel_spec(token_folder_path: 'str path to folder containing all sound fil
     wav_file_dict = read_wav_files(token_folder_path)
     columns = ['c'+ str(x) for x in range(nmel)]
     for word, wav_data in wav_file_dict.items():
-        current_rep = str.zfill(word.split('_')[-1], 2)
+        #current_rep = str.zfill(word.split('_')[-1], 2)
+        current_rep = int(word.split('_')[-1])
         current_words = '_'.join(word.split('_')[:2])
         sr = wav_data[0]
         sig = wav_data[1]
@@ -73,8 +74,8 @@ def main(speakers: 'str which speakers',
 
 if __name__ == '__main__':
     main(['FE', 'BS', 'RB', 'GJ', 'TB', 'MAG', 'SG', 'AR'],
-         '../pilot_2/mel_data/all_speakers_resyllabified.txt',
-         'resyllabified',
-         'normal',
+         '../pilot_2/mel_data/all_speakers_slow.txt',
+         'non_resyllabified',
+         'slow',
          26,
-         '../pilot_2/mel_data/resyllabified')
+         '../pilot_2/mel_data/slow')
