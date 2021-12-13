@@ -8,3 +8,4 @@ stimuli.py
 *.txt
 *checkpoints*
 .Rproj.user
+chopping_analysis/
