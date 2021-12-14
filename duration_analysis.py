@@ -2,7 +2,7 @@ from dtw_analysis import sound_files
 from chopping_analysis.get_mfcc import Stimuli
 import pandas as pd
 
-def get_normal_duration(speakers: 'list'):
+def get_duration(speakers: 'list', speech_rate: 'str normal or slow'):
     # initialise empty dict for data
     data = {'Speaker':[],
             'Pair': [],
@@ -15,9 +15,12 @@ def get_normal_duration(speakers: 'list'):
     converter = Stimuli()
     # loop through speakers
     for s in speakers:
-        file_paths = [f'pilot_2/{s}/normal_sound_files/non_resyllabified',
-                      f'pilot_2/{s}/normal_sound_files/resyllabified',
-                      f'pilot_2/{s}/normal_sound_files']
+        if speech_rate == 'normal':
+            file_paths = [f'pilot_2/{s}/normal_sound_files/non_resyllabified',
+                          f'pilot_2/{s}/normal_sound_files/resyllabified',
+                          f'pilot_2/{s}/normal_sound_files']
+        else:
+            file_paths = [f'pilot_2/{s}/slow_sound_files']
         # loop through directories
         for path in file_paths:
             # initialise sound_file instance
@@ -29,8 +32,12 @@ def get_normal_duration(speakers: 'list'):
                 words = '_'.join(word.split('_')[:2])
                 # onset or coda
                 condition = converter.get_condition(words)
-                # only get the duration data if it is the onset condition or not miss classified at the incorrect word
-                if len(path.split('/')) == 4 or condition == 'Onset':
+                # for normal
+                # only get the duration data if it is the onset condition or not miss classified as the incorrect word
+                # for slow, process all files
+                process_file = (speech_rate == 'normal' and (len(path.split('/')) == 4 or condition == 'Onset')) or \
+                              speech_rate == 'slow'
+                if process_file:
                     rep = word.split('_')[-2]
                     pair = converter.get_pair(words)
                     resyllab = 1 if path.split('/')[-1] == 'resyllabified' else 0
