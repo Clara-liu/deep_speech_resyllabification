@@ -68,14 +68,14 @@ def get_acc(net_config: 'tuple hyperparameters', data: 'dict train/test sets') -
     nframe = x_train.shape[1]
     nfeature = x_train.shape[2]
     net = Sequential()
-    net.add(Masking(mask_value=0.0, input_shape= (x_train.shape[1], x_train.shape[2])))
+    net.add(Masking(mask_value=0.0, input_shape= (nframe, nfeature)))
     net.add(Bidirectional(LSTM(nnodes_h1, return_sequences=True, dropout=dropout_h1),
                           merge_mode=merge, input_shape=(nframe, nfeature)))
-    net.add(Bidirectional(LSTM(nnodes_h2, return_sequences=True, dropout=dropout_h2),
+    net.add(Bidirectional(LSTM(nnodes_h2, return_sequences=False, dropout=dropout_h2),
                           merge_mode=merge))
-    net.add(Flatten())
+    #net.add(Flatten())
     net.add(Dense(nnodes_dense, activation='relu'))
-    net.add(Dense(100, activation='relu'))
+    net.add(Dense(15, activation='relu'))
     net.add(Dense(1, activation='sigmoid'))
     # chose optimiser
     if opt == 'adam':
