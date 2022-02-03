@@ -6,6 +6,8 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
 from main_analysis import get_acc, prep_data
 
+### best result with 8 speakers data config 316: (60, 0.1, 30, 0.2, 50, 'sum', 16, 'adam', 70, 0.001)
+
 
 def getConfig():
     nnodes_h1 = [40, 60]

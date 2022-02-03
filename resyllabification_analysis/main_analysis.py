@@ -2,7 +2,6 @@ from sklearn.preprocessing import MinMaxScaler
 import pandas as pd
 import numpy as np
 from os import listdir
-import re
 import os
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 from tensorflow.keras import optimizers
@@ -16,7 +15,7 @@ def cat_code(vowel: 'str a or i')-> 'numeric code of category':
 
 def prep_data(df: 'pandas mfcc df', interval: 'sampling hop of mfcc df',
               train_ratio, get_diff: 'get velocity' = True) -> 'train/test sets':
-    scaler = MinMaxScaler((-5, 20))
+    scaler = MinMaxScaler((-10, 20))
     # calculate velocity
     if get_diff:
         diff_df = df.select_dtypes('float').diff(periods=1, axis=0)
@@ -106,13 +105,14 @@ def main(data_path: 'str path to subsetted data',
         condition = f.split('_')[1].split('.')[0]
         for i in range(n_trial):
             # prep data
-            data = prep_data(df, 0.005, 0.7)
+            data = prep_data(df, 0.005, 0.8)
             _, acc = get_acc(config, data)
             acc_data_row = [acc, pair, condition, i]
             acc_data.append(acc_data_row)
+            print(f'file no. {files.index(f)} rep no. {i}')
     result = pd.DataFrame(acc_data, columns=['Accuracy', 'Pair', 'Condition', 'Trial'])
     return result
 
 
 if __name__ == '__main__':
-    result = main('../pilot_2/mel_data/resyllabified_conosnants/byPair', 50, (60, 0.05, 50, 0.1, 500, 'ave', 16, 'adam', 70, 0.001))
+    result = main('../pilot_2/mel_data/resyllabified_conosnants/byPair', 80, (60, 0.1, 30, 0.2, 50, 'sum', 16, 'adam', 70, 0.001))

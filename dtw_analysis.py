@@ -188,7 +188,7 @@ def main(reference_condition, speaker_list):
     data.to_csv(f'pilot_2/dtw_analysis_{reference_condition}_comparison.txt', sep='\t', index=False)
 
 if __name__ == '__main__':
-    main('resyllabified', ['BS', 'AR', 'FE', 'GJ', 'MAG', 'RB', 'SG', 'TB'])
+     main('resyllabified', ['BS', 'AR', 'FE', 'GJ', 'MAG', 'RB', 'SG', 'TB'])
 
 
 

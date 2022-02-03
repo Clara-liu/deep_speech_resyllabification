@@ -123,8 +123,8 @@ def main(speakers: 'str which speakers',
         subset_pair_condition(path_to_subsetted, path_to_combined)
 
 if __name__ == '__main__':
-    main(['FE', 'BS', 'RB','MAG', 'SG', 'AR'],
-         '../pilot_2/mel_data/all_speakers_resyllabified_consonants.txt',
-         'resyllabified_condition',
+    main(['FE', 'BS', 'RB','MAG', 'SG', 'AR', 'GJ', 'TB'],
+         '../pilot_2/mel_data/all_speakers_slow_consonants.txt',
+         'slow_sound_files',
          26,
-         '../pilot_2/mel_data/resyllabified_conosnants')
+         '../pilot_2/mel_data/slow_conosnants')

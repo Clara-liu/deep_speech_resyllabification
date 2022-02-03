@@ -1,7 +1,7 @@
 from torch import nn, from_numpy, Tensor, utils, rand, mean
 import torchaudio
 import torch
-from python_speech_features import mfcc
+from python_speech_features import mfcc, logfbank
 from random import choice, shuffle
 from math import ceil
 from librosa import power_to_db
@@ -152,7 +152,7 @@ def converter_mfcc(wav, sr, nmfccs=15, tweak=False):
 
 
 def checkMel():
-    filename = "pilot_0/slow_sound_files/Lee_stale_12.wav"
+    filename = "pilot_2/TB/slow_sound_files/Lee_stale_12.wav"
     waveform, sampling_rate = torchaudio.load(filename)
     original = converter(waveform, sr=sampling_rate)
     tweaked = converter(waveform, sr=sampling_rate, tweak=True, verbose=True)

@@ -194,7 +194,54 @@ def sum_plot_confusion(speakers: 'list'):
     plt.savefig(f'pilot_2/summed_validation.jpg')
     plt.close()
 
+def _qTA3rd(slope, height, lam, f00, v0, a0, nsamples, interval):
+	import numpy as np
+	import pandas as pd
+	## important!
+	height = height - slope * ((nsamples - 1) * interval)
+	result = np.empty((nsamples, 4))
+	t = 0
+	c1 = f00 - height
+	c2 = v0 + c1 * lam - slope
+	c3 = (a0 + 2 * c2 * lam - c1 * np.square(lam)) / 2
+	for i in range(nsamples):
+		y = (slope * t + height) + (c1 + c2 * t + c3 * np.square(t)) * np.exp(-lam * t)
+		v = -lam * (c3 * np.square(t) + c2 * t + c1) * np.exp(-lam * t) + (2 * c3 * t + c2) * np.exp(- lam * t) + slope
+		a = np.square(lam) * (c3 * np.square(t) + c2 * t + c1) * np.exp(-lam * t) - 2 * lam * (2 * c3 * t + c2) * \
+			np.exp(-lam * t) + 2 * c3 * np.exp(-lam * t)
+		result[i, 0], result[i, 1], result[i, 2], result[i, 3] = t, y, v, a
+		t += interval
 
+	result = pd.DataFrame(result, columns=['Time', 'F0', 'Velocity', 'Acceleration'])
+	return result
+
+
+def plot_gesture(spec: 'matrix (freq, t)',
+				 art_dim: 'str e.g. TRY',
+				 targets: 'tuple e.g. (2, -1)',
+				 turn_point: 'int e.g. 52',
+				 fig_path: 'str path to save figure'):
+	dur = spec.shape[1]
+	first_vowel = _qTA3rd(0, targets[0], 20, 1, 10, 30, turn_point, 0.005)
+	second_vowel = _qTA3rd(0,
+						   targets[1],
+						   20,
+						   first_vowel['F0'][(turn_point - 1)],
+						   first_vowel['Velocity'][(turn_point - 1)],
+						   first_vowel['Acceleration'][(turn_point - 1)],
+						   (dur - turn_point),
+						   0.005)
+	second_vowel['Time'] = second_vowel['Time'] + first_vowel['Time'][first_vowel.shape[0] - 1]
+	both_vowel = pd.concat([first_vowel, second_vowel], ignore_index=True)
+	fig, ax = plt.subplots(3, figsize=(10, 10))
+	ax[0].imshow(spec, aspect='auto', origin='lower')
+	ax[0].set_axis_off()
+	ax[1].plot(both_vowel['Time'].to_numpy(), both_vowel['F0'].to_numpy())
+	ax[1].set_title(art_dim)
+	ax[1].margins(x=0)
+	ax[1].set_axis_off()
+	ax[2].set_axis_off()
+	fig.savefig(fig_path, bbox_inches='tight')
 
 
 
