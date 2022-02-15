@@ -1,4 +1,4 @@
 # A project investigating resyllabification using deep learning
 - The model is a cnn-rnn network inspired by [DeepSpeech](https://arxiv.org/pdf/1512.02595.pdf), [AssemblyAI](https://colab.research.google.com/drive/1IPpwx4rX32rqHKpLz7dc8sOKspUa-YKO) and [ResNet](https://arxiv.org/pdf/1603.05027.pdf).
 - The current method uses the regular cross entropy loss, and not CTC loss due to the peaky distribution problem ([Liu et al., 2018](https://proceedings.neurips.cc/paper/2018/file/e44fea3bec53bcea3b7513ccef5857ac-Paper.pdf)). 
-- The CTC loss function proposed by Liu et al. (2018) is modified with a regularisation term which penalises large or small probability and rewards large entropy, thereby encouraging exploration and avoids peaky distribution. However, the method did improve peaky distribution for our acoustic data.
+- The CTC loss function proposed by Liu et al. (2018) is modified with a regularisation term which penalises large or small probability and rewards large entropy, thereby encouraging exploration and avoids peaky distribution. However, the method did **not** improve peaky distribution for our acoustic data.
