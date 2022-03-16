@@ -16,11 +16,9 @@ def get_duration(speakers: 'list', speech_rate: 'str normal or slow'):
     # loop through speakers
     for s in speakers:
         if speech_rate == 'normal':
-            file_paths = [f'pilot_2/{s}/normal_sound_files/non_resyllabified',
-                          f'pilot_2/{s}/normal_sound_files/resyllabified',
-                          f'pilot_2/{s}/normal_sound_files']
+            file_paths = [f'pilot_2/{s}/resyllabified_condition/consonants']
         else:
-            file_paths = [f'pilot_2/{s}/slow_sound_files']
+            file_paths = [f'pilot_2/{s}/slow_sound_files/consonants']
         # loop through directories
         for path in file_paths:
             # initialise sound_file instance
