@@ -5,6 +5,8 @@ paper/
 resyllabification_r
 stimuli.py
 *.png
+*.jpg
+*.jpeg
 *.yml
 *.json
 *pycache__/

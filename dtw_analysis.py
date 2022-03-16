@@ -194,4 +194,18 @@ if __name__ == '__main__':
 
 
 
-
+# fig, axs = plt.subplots(ncols=2, nrows=2)
+# fig.tight_layout()
+# fig.delaxes(axs[0,0])
+# axs[1,1].imshow(D, cmap=plt.get_cmap('gray_r'),
+#                 origin='lower', interpolation='nearest', aspect='auto')
+# axs[1,1].plot(wp[:, 1], wp[:, 0], marker='o', color='r', markersize=2)
+# axs[0,1].imshow(librosa.power_to_db(sound_obj.mel_dict['coop_art_2_slow'], ref=np.max), origin='lower', aspect='1.5')
+# axs[1,0].imshow(np.flip(librosa.power_to_db(sound_obj.mel_dict['coop_art_2_resyllabified'].T, ref=np.max), axis=1), origin='lower', aspect='0.6')
+# plt.subplots_adjust(hspace=0)
+# plt.subplots_adjust(wspace=0)
+# axs[1,1].set_title('Warping path on cosine distance matrix')
+# axs[1,1].set_ylabel('Time')
+# axs[1,1].set_xlabel('Time')
+# axs[1,0].set_title('Resyllabified "coop art"')
+# axs[0,1].set_title('Slow "coo part"')
