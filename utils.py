@@ -225,7 +225,7 @@ def plot_gesture(spec: 'matrix (freq, t)',
 	first_vowel = _qTA3rd(0, targets[0], 20, 1, 10, 30, turn_point, 0.005)
 	second_vowel = _qTA3rd(0,
 						   targets[1],
-						   20,
+						   10,
 						   first_vowel['F0'][(turn_point - 1)],
 						   first_vowel['Velocity'][(turn_point - 1)],
 						   first_vowel['Acceleration'][(turn_point - 1)],
