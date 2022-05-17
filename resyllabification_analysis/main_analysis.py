@@ -112,7 +112,6 @@ def main(data_path: 'str path to subsetted data',
             _, acc = get_acc(config, data)
             acc_data_row = [acc, pair, condition, i]
             acc_data.append(acc_data_row)
-            print(f'file no. {files.index(f)} rep no. {i}')
     result = pd.DataFrame(acc_data, columns=['Accuracy', 'Pair', 'Condition', 'Trial'])
     return result
 
