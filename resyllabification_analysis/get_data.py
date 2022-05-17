@@ -106,7 +106,7 @@ def get_all_speakers(speakers: 'list speakers', combined_df_path: 'str path to s
                      segmented_parent_folder: 'str resyllabified_condition or slow_sound_files',
                      nmel)-> 'save all speakers df':
     for s in speakers:
-        file_path = f'../pilot_2/{s}/{segmented_parent_folder}/consonants'
+        file_path = f'../pilot_2/{s}/{segmented_parent_folder}/first_cv'
         current_df = get_mel_spec(file_path, s, nmel)
         if 'all_speakers_df' not in locals():
             all_speakers_df = current_df
@@ -124,7 +124,7 @@ def main(speakers: 'str which speakers',
 
 if __name__ == '__main__':
     main(['FE', 'BS', 'RB','MAG', 'SG', 'AR', 'GJ', 'TB'],
-         '../pilot_2/mel_data/all_speakers_slow_consonants.txt',
+         '../pilot_2/mel_data/all_speakers_slow_first_cv.txt',
          'slow_sound_files',
          26,
-         '../pilot_2/mel_data/slow_conosnants')
+         '../pilot_2/mel_data/slow_first_cv')

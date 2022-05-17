@@ -3,11 +3,13 @@ import pandas as pd
 import numpy as np
 from os import listdir
 import os
+import logging
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 from tensorflow.keras import optimizers
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense, LSTM, Bidirectional, Masking, Flatten
 from tensorflow.keras.backend import clear_session
+from tqdm import tqdm
 
 def cat_code(vowel: 'str a or i')-> 'numeric code of category':
     code = 0 if vowel == 'a' else 1
@@ -96,6 +98,7 @@ def main(data_path: 'str path to subsetted data',
     files = listdir(data_path)
     acc_data = []
     for f in files:
+        logging.info(f'Processing {f}...')
         # read data
         file_path = f'{data_path}/{f}'
         df = pd.read_csv(file_path, sep = '\t')
@@ -103,7 +106,7 @@ def main(data_path: 'str path to subsetted data',
         pair = f.split('_')[0]
         # get condition label: onset or coda
         condition = f.split('_')[1].split('.')[0]
-        for i in range(n_trial):
+        for i in tqdm(range(n_trial), desc='Repetition trials: '):
             # prep data
             data = prep_data(df, 0.005, 0.8)
             _, acc = get_acc(config, data)
@@ -115,4 +118,5 @@ def main(data_path: 'str path to subsetted data',
 
 
 if __name__ == '__main__':
-    result = main('../pilot_2/mel_data/resyllabified_conosnants/byPair', 80, (60, 0.1, 30, 0.2, 50, 'sum', 16, 'adam', 70, 0.001))
+    logging.basicConfig(level=logging.INFO)
+    result = main('../pilot_2/mel_data/slow_first_cv/byPair', 80, (60, 0.1, 30, 0.2, 50, 'sum', 16, 'adam', 70, 0.001))
