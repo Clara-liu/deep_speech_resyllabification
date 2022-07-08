@@ -1,14 +1,14 @@
-from torch import nn, from_numpy, Tensor, utils, rand, mean
 import torchaudio
 import torch
+import numpy as np
+import matplotlib.pyplot as plt
 from python_speech_features import mfcc, logfbank
 from random import choice, shuffle
 from math import ceil
 from librosa import power_to_db
 from librosa.util import normalize
+from torch import nn, from_numpy, Tensor, utils, rand, mean
 from os import listdir
-import numpy as np
-import matplotlib.pyplot as plt
 #torchaudio.set_audio_backend('sox_io')
 
 class LabelConvert:
@@ -113,7 +113,7 @@ def converter(wav, sr, nmels=40, tweak=False, verbose=False):
     hop = int(0.005*sr)
     tweaker = choice(['mask_time', 'mask_frequency', 'both_masks', 'noise'])
     mel_net = torchaudio.transforms.MelSpectrogram(sample_rate=sr, n_mels=nmels, win_length=win_len, n_fft=win_len,
-                                                   hop_length=hop)
+                                                hop_length=hop)
     if tweak:
         if tweaker != 'noise':
             tweak_net = []
@@ -144,7 +144,7 @@ def converter_mfcc(wav, sr, nmfccs=15, tweak=False):
     else:
         wav = wav.numpy()
     mfccs = mfcc(wav, samplerate=sr, winlen=win_len, winstep=hop, numcep=nmfccs, nfft=nfft, appendEnergy=False,
-                 winfunc=np.hamming)
+                winfunc=np.hamming)
     converted = from_numpy(mfccs).transpose(0, 1)
     # normalise
     converted = converted - mean(converted, dim=1)[:, None]
@@ -288,17 +288,17 @@ def checkDataProcess():
     train_data, val_data = loadData('pilot_1')
     batch_size = 50
     train_loader = utils.data.DataLoader(dataset=train_data, batch_size=batch_size, shuffle=True,
-                                         collate_fn = lambda x: dataProcess(x))
+                                        collate_fn = lambda x: dataProcess(x))
     val_loader = utils.data.DataLoader(dataset=val_data, batch_size=batch_size, shuffle=True,
-                                       collate_fn = lambda x: dataProcess(x, train=False))
+                                    collate_fn = lambda x: dataProcess(x, train=False))
     for batch_num, data in enumerate(train_loader):
         spec, targets, input_lens, target_lens = data
         print(f'batch: {batch_num}\nspec shape: {spec.shape}\ntarget shape: {targets.shape}\n'
-              f'input len shape: {input_lens.shape}\ntarget len shape: {target_lens.shape}')
+            f'input len shape: {input_lens.shape}\ntarget len shape: {target_lens.shape}')
     for batch_num, data in enumerate(val_loader):
         spec, targets, input_lens, target_lens = data
         print(f'batch: {batch_num}\nspec shape: {spec.shape}\ntarget shape: {targets.shape}\n'
-              f'input len shape: {input_lens.shape}\ntarget len shape: {target_lens.shape}')
+            f'input len shape: {input_lens.shape}\ntarget len shape: {target_lens.shape}')
 
 if __name__ == '__main__':
     checkMel()

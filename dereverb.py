@@ -1,9 +1,9 @@
+import os
 import numpy as np
 import soundfile as sf
 from scipy.io.wavfile import write
 from nara_wpe.wpe import wpe
 from nara_wpe.utils import stft, istft
-import os
 
 sounds_dir = 'pilot_2/FE/normal_sound_files'
 

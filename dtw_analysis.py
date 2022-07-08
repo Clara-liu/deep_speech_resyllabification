@@ -1,10 +1,10 @@
 import librosa
-from os import listdir
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sn
 from stimuli import code_dict, stimuli_pilot
+from os import listdir
 
 
 
@@ -39,10 +39,10 @@ class sound_files:
         win_int = int(win_s*self.sr)
         for token, sig in self.wav_dict.items():
             self.mel_dict[token] = librosa.feature.melspectrogram(sig, sr=self.sr, n_mels=n_mels,
-                                                                  n_fft=win_int, hop_length=hop_int)
+                                                                n_fft=win_int, hop_length=hop_int)
 
 def calc_dtw_dist(sound_file_instance: 'instance of the sound_files class',
-                  dist_func: 'str function to calculate feature vector distance e.g. cosine')-> 'matrix of distance':
+                dist_func: 'str function to calculate feature vector distance e.g. cosine')-> 'matrix of distance':
     # get list of token labels
     token_list = list(sound_file_instance.mel_dict.keys())
     n_tokens = len(token_list)
@@ -60,10 +60,10 @@ def calc_dtw_dist(sound_file_instance: 'instance of the sound_files class',
             if rad < 0.1:
                 rad = 0.1
             D, wp = librosa.sequence.dtw(sound_file_instance.mel_dict[token_row],
-                                         sound_file_instance.mel_dict[token_col],
-                                         global_constraints=True,
-                                         band_rad=rad,
-                                         metric=dist_func)
+                                        sound_file_instance.mel_dict[token_col],
+                                        global_constraints=True,
+                                        band_rad=rad,
+                                        metric=dist_func)
             wp_dist_list = [D[x, y] for x, y in wp]
             total_dist = sum(wp_dist_list)
             dist_matrix[token_list.index(token_row), token_list.index(token_col)] = total_dist
@@ -71,9 +71,9 @@ def calc_dtw_dist(sound_file_instance: 'instance of the sound_files class',
 
 
 def take_rep_mean(dist_matrix,
-                  label_list,
-                  reduce_v_contrast = True)-> 'dist matrix averaged between repetition,' \
-                                              'if reduce_v_contrast, dist martix further averaged between vowel pairs':
+                label_list,
+                reduce_v_contrast = True)-> 'dist matrix averaged between repetition,' \
+                                            'if reduce_v_contrast, dist martix further averaged between vowel pairs':
     # reduce repetitions and retain insertion order e.g. ['a', 'a', 'b'] -> ['a', 'b']
     label_list_reduced = list(dict.fromkeys([f'{x[0]}_{x[1]}_{"_".join(x[3:])}' for x in [x_.split('_') for x_ in label_list]]))
     # indices of repeated labels
@@ -118,11 +118,11 @@ def take_rep_mean(dist_matrix,
 
 
 def get_heatmap(speaker: 'str speaker abbreviation',
-         reduction_level: 'str none, rep or all')-> 'none output png to speaker folder':
+        reduction_level: 'str none, rep or all')-> 'none output png to speaker folder':
     speaker_folder_path = f'pilot_2/{speaker}'
     path_dict = {'slow': f'pilot_2/{speaker}/slow_sound_files',
-                 'non_resyllabified': f'pilot_2/{speaker}/normal_sound_files/non_resyllabified',
-                 'resyllabified': f'pilot_2/{speaker}/normal_sound_files/resyllabified'}
+                'non_resyllabified': f'pilot_2/{speaker}/normal_sound_files/non_resyllabified',
+                'resyllabified': f'pilot_2/{speaker}/normal_sound_files/resyllabified'}
     sound_obj = sound_files(speaker, path_dict)
     sound_obj.get_wavs()
     sound_obj.get_mels(0.01, 0.03, 26)
@@ -145,11 +145,11 @@ def get_heatmap(speaker: 'str speaker abbreviation',
         fig.savefig(f'{speaker_folder_path}/{speaker}_dtw_dist.png', dpi = 700)
 
 def get_dist_data(speaker: 'str speaker abbreviation',
-                  reference_condition: 'str resyllabified vs slow or non_resyllabified vs slow'):
+                reference_condition: 'str resyllabified vs slow or non_resyllabified vs slow'):
     speaker_folder_path = f'pilot_2/{speaker}'
     path_dict = {'slow': f'pilot_2/{speaker}/slow_sound_files',
-             'non_resyllabified': f'pilot_2/{speaker}/normal_sound_files/non_resyllabified',
-             'resyllabified': f'pilot_2/{speaker}/normal_sound_files/resyllabified'}
+            'non_resyllabified': f'pilot_2/{speaker}/normal_sound_files/non_resyllabified',
+            'resyllabified': f'pilot_2/{speaker}/normal_sound_files/resyllabified'}
     sound_obj = sound_files(speaker, path_dict)
     sound_obj.get_wavs()
     sound_obj.get_mels(0.01, 0.03, 26)
@@ -188,7 +188,7 @@ def main(reference_condition, speaker_list):
     data.to_csv(f'pilot_2/dtw_analysis_{reference_condition}_comparison.txt', sep='\t', index=False)
 
 if __name__ == '__main__':
-     main('resyllabified', ['BS', 'AR', 'FE', 'GJ', 'MAG', 'RB', 'SG', 'TB'])
+    main('resyllabified', ['BS', 'AR', 'FE', 'GJ', 'MAG', 'RB', 'SG', 'TB'])
 
 
 

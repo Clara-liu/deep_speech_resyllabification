@@ -1,10 +1,10 @@
-from torch.autograd import Variable
 import torch
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sn
 from data_generation import LabelConvert
+from torch.autograd import Variable
 from os import listdir
 
 class averager(object):
@@ -217,20 +217,20 @@ def _qTA3rd(slope, height, lam, f00, v0, a0, nsamples, interval):
 
 
 def plot_gesture(spec: 'matrix (freq, t)',
-				 art_dim: 'str e.g. TRY',
-				 targets: 'tuple e.g. (2, -1)',
-				 turn_point: 'int e.g. 52',
-				 fig_path: 'str path to save figure'):
+				art_dim: 'str e.g. TRY',
+				targets: 'tuple e.g. (2, -1)',
+				turn_point: 'int e.g. 52',
+				fig_path: 'str path to save figure'):
 	dur = spec.shape[1]
 	first_vowel = _qTA3rd(0, targets[0], 20, 1, 10, 30, turn_point, 0.005)
 	second_vowel = _qTA3rd(0,
-						   targets[1],
-						   10,
-						   first_vowel['F0'][(turn_point - 1)],
-						   first_vowel['Velocity'][(turn_point - 1)],
-						   first_vowel['Acceleration'][(turn_point - 1)],
-						   (dur - turn_point),
-						   0.005)
+						targets[1],
+						10,
+						first_vowel['F0'][(turn_point - 1)],
+						first_vowel['Velocity'][(turn_point - 1)],
+						first_vowel['Acceleration'][(turn_point - 1)],
+						(dur - turn_point),
+						0.005)
 	second_vowel['Time'] = second_vowel['Time'] + first_vowel['Time'][first_vowel.shape[0] - 1]
 	both_vowel = pd.concat([first_vowel, second_vowel], ignore_index=True)
 	fig, ax = plt.subplots(3, figsize=(10, 10))

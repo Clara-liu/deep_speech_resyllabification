@@ -1,6 +1,6 @@
+import pandas as pd
 from dtw_analysis import sound_files
 from chopping_analysis.get_mfcc import Stimuli
-import pandas as pd
 
 def get_duration(speakers: 'list', speech_rate: 'str normal or slow'):
     # initialise empty dict for data
@@ -34,7 +34,7 @@ def get_duration(speakers: 'list', speech_rate: 'str normal or slow'):
                 # only get the duration data if it is the onset condition or not miss classified as the incorrect word
                 # for slow, process all files
                 process_file = (speech_rate == 'normal' and (len(path.split('/')) == 4 or condition == 'Onset')) or \
-                              speech_rate == 'slow'
+                            speech_rate == 'slow'
                 if process_file:
                     rep = word.split('_')[-2]
                     pair = converter.get_pair(words)

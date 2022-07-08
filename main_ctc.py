@@ -1,9 +1,9 @@
+import torch
+import utils
+import torch.nn.functional as F
 from models import Model
 from pytorch_ctc.ctc_ent import ctc_ent_cost
 from data_generation import dataProcess, loadData
-import torch
-import torch.nn.functional as F
-import utils
 from torch.utils import tensorboard
 
 # hyper-parameters and others

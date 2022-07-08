@@ -1,10 +1,10 @@
+import torch
+import os
+import matplotlib.pyplot as plt
 from models import VanillaModel
 from data_generation import dataProcess, loadData, LabelConvert, loadNormal, processNormal
-import torch
 from torch.utils import tensorboard
 from utils import early_stopping, confusion_collapsed
-import matplotlib.pyplot as plt
-import os
 from shutil import copyfile
 
 # hyper-parameters and others
@@ -27,8 +27,8 @@ params_args = {
 writer = tensorboard.SummaryWriter('runs/vanilla_classification_pilot_2_SG')
 # initiate model
 net = VanillaModel(params_args['n_res_cnn'], params_args['n_rnn'], params_args['rnn_dim'], params_args['n_class'],
-                   params_args['n_feats'], params_args['linear_dim'], stride=1, dropout=params_args['dropout'],
-                   convo_channel=params_args['n_convos'])
+                params_args['n_feats'], params_args['linear_dim'], stride=1, dropout=params_args['dropout'],
+                convo_channel=params_args['n_convos'])
 # move model to computing unit
 if torch.cuda.is_available():
     device = 'cuda:0'
@@ -117,9 +117,9 @@ def plotSortNorm():
 
 def main():
     train_loader = torch.utils.data.DataLoader(dataset=train_data, batch_size=params_args['batch_size'],
-                                               shuffle=True, collate_fn=lambda x: dataProcess(x))
+                                            shuffle=True, collate_fn=lambda x: dataProcess(x))
     val_loader = torch.utils.data.DataLoader(dataset=val_data, batch_size=params_args['batch_size'], shuffle=True,
-                                         collate_fn=lambda x: dataProcess(x, train=False))
+                                        collate_fn=lambda x: dataProcess(x, train=False))
     criterion = torch.nn.CrossEntropyLoss()
     metric_log = []
     for epoch in range(params_args['n_epochs']):

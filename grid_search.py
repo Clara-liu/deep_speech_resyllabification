@@ -1,5 +1,5 @@
-from main_ctc import main as search
 import json
+from main_ctc import main as search
 
 # search space
 setups = {
