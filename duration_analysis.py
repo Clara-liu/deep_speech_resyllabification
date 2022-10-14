@@ -1,6 +1,7 @@
 import pandas as pd
 from dtw_analysis import sound_files
-from chopping_analysis.get_mfcc import Stimuli
+from chopping_analysis.get_mfcc import *
+
 
 def get_duration(speakers: 'list', speech_rate: 'str normal or slow'):
     # initialise empty dict for data
