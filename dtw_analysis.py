@@ -192,7 +192,12 @@ if __name__ == '__main__':
 
 
 
-
+# sound_obj = sound_files('TB', {'slow':'/home/clara/Education/SHaPS_PhD/resyllabification_study/pilot_2/TB/slow_sound_files', 'resyllabified':'/home/clara/Education/SHaPS_PhD/resyllabification_study/pilot_2/TB/resyllabified_condition'})
+# sound_obj.get_wavs()
+# sound_obj.get_mels(0.01, 0.03, 26)
+# D, wp = librosa.sequence.dtw(sound_obj.mel_dict['coop_art_2_resyllabified'],
+#                             sound_obj.mel_dict['coo_part_2_slow'],
+#                             metric='cosine')
 
 # fig, axs = plt.subplots(ncols=2, nrows=2)
 # fig.tight_layout()
@@ -201,11 +206,13 @@ if __name__ == '__main__':
 #                 origin='lower', interpolation='nearest', aspect='auto')
 # axs[1,1].plot(wp[:, 1], wp[:, 0], marker='o', color='r', markersize=2)
 # axs[0,1].imshow(librosa.power_to_db(sound_obj.mel_dict['coop_art_2_slow'], ref=np.max), origin='lower', aspect='1.5')
+# axs[0,1].set_axis_off()
 # axs[1,0].imshow(np.flip(librosa.power_to_db(sound_obj.mel_dict['coop_art_2_resyllabified'].T, ref=np.max), axis=1), origin='lower', aspect='0.6')
+# axs[1,0].set_axis_off()
 # plt.subplots_adjust(hspace=0)
 # plt.subplots_adjust(wspace=0)
 # axs[1,1].set_title('Warping path on cosine distance matrix')
 # axs[1,1].set_ylabel('Time')
 # axs[1,1].set_xlabel('Time')
 # axs[1,0].set_title('Resyllabified "coop art"')
-# axs[0,1].set_title('Slow "coo part"')
+# axs[0,1].set_title('Slow "coop art"')
