@@ -13,7 +13,7 @@ params_args = {
     'n_rnn': 5,
     'rnn_dim': 512,
     'linear_dim': 512,
-    'n_class': 16,
+    'n_class': 12,
     'n_feats': 40,
     'stride': 1,
     'dropout': 0.1,
